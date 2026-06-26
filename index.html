@@ -1,0 +1,502 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+    <title>DDIRE-PeerSolve - Premium Dashboard</title>
+    <style>
+        body { margin: 0; overflow: hidden; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background: #000; color: white; }
+        .toolbar { position: absolute; top: 20px; background: #1a1a1a; padding: 8px 15px; border-radius: 40px; border: 1px solid #333; display: flex; align-items: center; gap: 15px; box-shadow: 0 4px 20px rgba(0,0,0,0.5); z-index: 10; pointer-events: auto; }
+        #ui-left { left: 20px; }
+        #ui-right { right: 20px; }
+        .divider { width: 1px; height: 24px; background: #333; }
+        .color-wrapper { display: flex; gap: 10px; align-items: center; }
+        .color-btn { width: 24px; height: 24px; border-radius: 50%; cursor: pointer; border: 2px solid transparent; transition: 0.2s; }
+        .color-btn.white { background: #fff; }
+        .color-btn.red { background: #e74c3c; }
+        .color-btn.green { background: #2ecc71; }
+        .active-color { border: 2px solid #aaa; transform: scale(1.1); box-shadow: 0 0 8px rgba(255,255,255,0.2); }
+        .tools-wrapper { display: flex; gap: 8px; position: relative; }
+        .tool-btn { background: transparent; color: #bbb; border: 1px solid #333; border-radius: 20px; padding: 6px 14px; font-size: 13px; font-weight: 600; cursor: pointer; transition: 0.2s; }
+        .tool-btn:hover { background: #2a2a2a; color: white; }
+        .active-tool { border-color: #2ecc71; color: #2ecc71; background: rgba(46, 204, 113, 0.1); }
+        #shape-menu { display: none; position: absolute; top: 50px; left: 190px; background: #1a1a1a; padding: 10px; border-radius: 15px; border: 1px solid #333; z-index: 20; grid-template-columns: repeat(2, 1fr); gap: 10px; box-shadow: 0 10px 30px rgba(0,0,0,0.8); }
+        .shape-btn { background: #222; border: 1px solid #444; color: white; padding: 10px 15px; border-radius: 10px; cursor: pointer; transition: 0.2s; font-size: 18px; display: flex; justify-content: center; align-items: center; }
+        .shape-btn:hover { background: #2ecc71; color: black; border-color: #2ecc71; }
+        .size-wrapper { display: flex; align-items: center; gap: 10px; font-size: 12px; color: #888; }
+        input[type=range] { -webkit-appearance: none; width: 80px; background: transparent; cursor: pointer; }
+        input[type=range]::-webkit-slider-runnable-track { height: 4px; background: #444; border-radius: 2px; }
+        input[type=range]::-webkit-slider-thumb { -webkit-appearance: none; height: 12px; width: 12px; border-radius: 50%; background: #2ecc71; margin-top: -4px; }
+        .action-btn { background: transparent; color: #bbb; border: 1px solid #333; border-radius: 20px; padding: 6px 14px; font-size: 13px; font-weight: 600; cursor: pointer; transition: 0.2s; }
+        .action-btn:hover { background: #2a2a2a; color: white; }
+        .btn-clear { color: #e74c3c; border-color: rgba(231, 76, 60, 0.3); }
+        .btn-clear:hover { background: rgba(231, 76, 60, 0.1); }
+        .btn-chat { border-color: #2ecc71; color: #2ecc71; display: flex; align-items: center; gap: 5px; position: relative;}
+        #chat-container { position: absolute; right: 20px; top: 75px; bottom: 20px; width: 320px; background: #1a1a1a; border: 1px solid #333; border-radius: 15px; display: none; flex-direction: column; pointer-events: auto; z-index: 10; box-shadow: 0 10px 30px rgba(0,0,0,0.8); }
+        #chat-header { background: #222; padding: 12px 15px; font-weight: bold; border-top-left-radius: 15px; border-top-right-radius: 15px; border-bottom: 1px solid #333; display: flex; justify-content: space-between; align-items: center; }
+        .close-chat-btn { cursor: pointer; color: #aaa; font-size: 16px; }
+        .close-chat-btn:hover { color: white; }
+        #chat-messages { flex-grow: 1; padding: 15px; overflow-y: auto; display: flex; flex-direction: column; gap: 10px; }
+        .msg { background: #333; padding: 8px 12px; border-radius: 10px; font-size: 13px; align-self: flex-start; max-width: 85%; word-wrap: break-word; }
+        .msg.self { background: #2ecc71; color: black; align-self: flex-end; }
+        .msg-sender { font-size: 10px; color: #aaa; margin-bottom: 3px; display: block; }
+        .msg.self .msg-sender { color: #145c32; text-align: right; }
+        #chat-input-area { display: flex; padding: 10px; border-top: 1px solid #333; gap: 8px; }
+        #chat-input { flex-grow: 1; padding: 10px; border-radius: 8px; border: 1px solid #333; background: #000; color: white; outline: none; font-size: 13px;}
+        #chat-input:focus { border-color: #2ecc71; }
+        #send-btn { background: #2ecc71; color: black; border: none; padding: 8px 15px; border-radius: 8px; font-weight: bold; cursor: pointer; }
+        #whiteboard { background: black; display: block; touch-action: none; cursor: crosshair; position: absolute; top:0; left:0; z-index: 1;}
+    </style>
+</head>
+<body>
+
+    <div id="ui-left" class="toolbar">
+        <div class="color-wrapper">
+            <div class="color-btn white active-color" id="c-white" onclick="setColor('white')"></div>
+            <div class="color-btn red" id="c-red" onclick="setColor('#e74c3c')"></div>
+            <div class="color-btn green" id="c-green" onclick="setColor('#2ecc71')"></div>
+        </div>
+        <div class="divider"></div>
+        <div class="tools-wrapper">
+            <button class="tool-btn active-tool" id="t-pen" onclick="setTool('pen')">Pen</button>
+            <button class="tool-btn" id="t-eraser" onclick="setTool('eraser')">Eraser</button>
+            <button class="tool-btn" id="t-text" onclick="setTool('text')">Text</button>
+            <button class="tool-btn" id="t-shape" onclick="toggleShapeMenu()">Shapes ▼</button>
+        </div>
+        <div class="divider"></div>
+        <div class="size-wrapper">
+            <span id="size-label">Size: 4px</span>
+            <input type="range" id="size-slider" min="1" max="50" value="4" oninput="updateSize(this.value)">
+        </div>
+    </div>
+
+    <div id="shape-menu">
+        <button class="shape-btn" onclick="selectShape('line')" title="Line">➖</button>
+        <button class="shape-btn" onclick="selectShape('rect')" title="Rectangle">⬜</button>
+        <button class="shape-btn" onclick="selectShape('circle')" title="Circle">⭕</button>
+        <button class="shape-btn" onclick="selectShape('triangle')" title="Triangle">🔺</button>
+    </div>
+
+    <div id="ui-right" class="toolbar">
+        <button class="action-btn" onclick="undo()">Undo</button>
+        <button class="action-btn" onclick="redo()">Redo</button>
+        <button class="action-btn btn-clear" onclick="clearAll(true)">Clear</button>
+        <div class="divider"></div>
+        <button class="action-btn btn-chat" onclick="toggleChat()">
+            💬 Chat
+            <span id="chat-badge" style="display:none; position:absolute; top:-5px; right:-5px; background:red; color:white; border-radius:50%; padding:2px 6px; font-size:10px;">0</span>
+        </button>
+    </div>
+
+    <div id="chat-container">
+        <div id="chat-header">
+            <span>DDIRE Chat</span>
+            <span class="close-chat-btn" onclick="toggleChat()">✖</span>
+        </div>
+        <div id="chat-messages">
+            <div class="msg" style="align-self: center; background: transparent; color: #888; font-size: 11px;">Welcome to DDIRE-PeerSolve</div>
+        </div>
+        <div id="chat-input-area">
+            <input type="text" id="chat-input" placeholder="Type a message..." onkeypress="handleEnter(event)">
+            <button id="send-btn" onclick="sendMessage()">Send</button>
+        </div>
+    </div>
+
+    <canvas id="whiteboard"></canvas>
+
+    <script src="/socket.io/socket.io.js"></script>
+    <script>
+        const socket = io();
+
+        let userName = localStorage.getItem('ddire_username');
+        if (!userName) {
+            userName = prompt("Welcome to DDIRE-PeerSolve! Please enter your Name:") || "User";
+            localStorage.setItem('ddire_username', userName);
+        }
+
+        const canvas = document.getElementById('whiteboard');
+        const ctx = canvas.getContext('2d');
+
+        let isDrawing = false;
+        let color = 'white'; 
+        let currentTool = 'pen'; 
+        let currentShape = 'line'; 
+        
+        let startX = 0, startY = 0;
+        let prevX = 0, prevY = 0; 
+        let lastX = 0, lastY = 0; 
+        let snapshot; 
+        
+        let penSize = 4;
+        let eraserSize = 25;
+        
+        let history = [];
+        let redoStack = [];
+        
+        let scale = 1;
+        let offsetX = 0;
+        let offsetY = 0;
+        let touchStartDist = 0;
+        let initialScale = 1;
+
+        let chatOpen = false;
+        let unreadCount = 0;
+
+        function setupCanvas() {
+            const ratio = window.devicePixelRatio || 1;
+            canvas.width = window.innerWidth * ratio;
+            canvas.height = window.innerHeight * ratio;
+            canvas.style.width = window.innerWidth + 'px';
+            canvas.style.height = window.innerHeight + 'px';
+            ctx.scale(ratio, ratio);
+            ctx.imageSmoothingEnabled = true;
+            ctx.imageSmoothingQuality = 'high';
+            fillBlackBackground();
+        }
+
+        function fillBlackBackground() {
+            ctx.fillStyle = 'black';
+            ctx.fillRect(-99999, -99999, 199999, 199999);
+        }
+
+        function toggleChat() {
+            chatOpen = !chatOpen;
+            document.getElementById('chat-container').style.display = chatOpen ? 'flex' : 'none';
+            if (chatOpen) {
+                unreadCount = 0;
+                document.getElementById('chat-badge').style.display = 'none';
+            }
+        }
+
+        function sendMessage() {
+            const input = document.getElementById('chat-input');
+            const msgText = input.value.trim();
+            if (msgText !== '') {
+                const chatMessages = document.getElementById('chat-messages');
+                chatMessages.innerHTML += `<div class="msg self"><span class="msg-sender">${userName}</span>${msgText}</div>`;
+                input.value = '';
+                chatMessages.scrollTop = chatMessages.scrollHeight; 
+                socket.emit('chatMessage', { sender: userName, msg: msgText });
+            }
+        }
+
+        function handleEnter(e) { if (e.key === 'Enter') sendMessage(); }
+
+        function toggleShapeMenu() {
+            const menu = document.getElementById('shape-menu');
+            menu.style.display = menu.style.display === 'grid' ? 'none' : 'grid';
+        }
+
+        function selectShape(shapeType) {
+            currentShape = shapeType;
+            setTool('shape');
+            document.getElementById('shape-menu').style.display = 'none';
+        }
+
+        function updateUI() {
+            document.querySelectorAll('.color-btn').forEach(b => b.classList.remove('active-color'));
+            if(color === 'white') document.getElementById('c-white').classList.add('active-color');
+            if(color === '#e74c3c') document.getElementById('c-red').classList.add('active-color');
+            if(color === '#2ecc71') document.getElementById('c-green').classList.add('active-color');
+
+            document.querySelectorAll('.tool-btn').forEach(b => b.classList.remove('active-tool'));
+            if (currentTool === 'shape') {
+                document.getElementById('t-shape').classList.add('active-tool');
+            } else {
+                document.getElementById('t-' + currentTool).classList.add('active-tool');
+            }
+
+            const slider = document.getElementById('size-slider');
+            const label = document.getElementById('size-label');
+            
+            if(currentTool === 'eraser') {
+                slider.value = eraserSize;
+                label.innerText = `Size: ${eraserSize}px`;
+                canvas.style.cursor = `url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10" stroke="white" stroke-width="2" fill="none"/></svg>') 12 12, auto`;
+            } else if (currentTool === 'text') {
+                canvas.style.cursor = "text";
+            } else {
+                slider.value = penSize;
+                label.innerText = `Size: ${penSize}px`;
+                canvas.style.cursor = "crosshair";
+            }
+        }
+
+        function setColor(c) { color = c; if (currentTool !== 'shape') setTool('pen'); updateUI(); }
+        function setTool(t) { currentTool = t; document.getElementById('shape-menu').style.display = 'none'; updateUI(); }
+        
+        function updateSize(val) {
+            if(currentTool === 'eraser') eraserSize = val;
+            else penSize = val;
+            document.getElementById('size-label').innerText = `Size: ${val}px`;
+        }
+
+        function saveState() {
+            if (history.length > 30) history.shift(); 
+            ctx.setTransform(1, 0, 0, 1, 0, 0); 
+            history.push(canvas.toDataURL("image/png", 1.0));
+            redoStack = []; 
+            applyTransform(); 
+        }
+
+        function loadState(dataUrl) {
+            let img = new Image();
+            img.src = dataUrl;
+            img.onload = () => {
+                ctx.setTransform(1, 0, 0, 1, 0, 0);
+                ctx.clearRect(0, 0, canvas.width, canvas.height);
+                ctx.drawImage(img, 0, 0);
+                applyTransform();
+            };
+        }
+
+        function undo() { if (history.length > 1) { redoStack.push(history.pop()); loadState(history[history.length - 1]); } }
+        function redo() { if (redoStack.length > 0) { let nextState = redoStack.pop(); history.push(nextState); loadState(nextState); } }
+        
+        // NAYA: clearAll function update ki gayi hai
+        function clearAll(emitSignal = false) {
+            ctx.setTransform(1, 0, 0, 1, 0, 0);
+            const ratio = window.devicePixelRatio || 1;
+            ctx.clearRect(0, 0, canvas.width * ratio, canvas.height * ratio);
+            fillBlackBackground();
+            applyTransform();
+            saveState();
+            
+            // Agar button daba kar clear kiya hai, toh dost ko bhi signal bhejo
+            if (emitSignal) {
+                socket.emit('clearCanvas');
+            }
+        }
+
+        function getCoords(e) {
+            let rect = canvas.getBoundingClientRect();
+            let clientX = e.clientX || (e.touches ? e.touches[0].clientX : 0);
+            let clientY = e.clientY || (e.touches ? e.touches[0].clientY : 0);
+            return {
+                x: (clientX - rect.left - offsetX) / scale,
+                y: (clientY - rect.top - offsetY) / scale
+            };
+        }
+
+        // --- Drawing Logic ---
+        function startAction(e) {
+            if(e.target.closest('.toolbar') || e.target.closest('#chat-container') || e.target.closest('#shape-menu')) return;
+            if (e.touches && e.touches.length > 1) return; 
+            
+            const coords = getCoords(e);
+            
+            if (currentTool === 'text') {
+                let text = prompt("DDIRE Dashboard par kya likhna hai?");
+                if (text) {
+                    ctx.fillStyle = color;
+                    let fontSize = 24 / scale;
+                    ctx.font = fontSize + "px 'Segoe UI', sans-serif";
+                    ctx.fillText(text, coords.x, coords.y);
+                    saveState();
+                    
+                    // NAYA: Text ko server par bhej rahe hain
+                    socket.emit('drawText', { text: text, x: coords.x, y: coords.y, color: color, size: fontSize });
+                }
+                return; 
+            }
+
+            isDrawing = true;
+            startX = coords.x;
+            startY = coords.y;
+            prevX = coords.x;
+            prevY = coords.y;
+
+            if (currentTool === 'shape') {
+                snapshot = ctx.getImageData(0, 0, canvas.width, canvas.height);
+                return;
+            }
+
+            ctx.beginPath();
+            ctx.moveTo(coords.x, coords.y);
+        }
+
+        function moveAction(e) {
+            if (e.touches && e.touches.length === 2) {
+                e.preventDefault();
+                let dist = Math.hypot(e.touches[0].clientX - e.touches[1].clientX, e.touches[0].clientY - e.touches[1].clientY);
+                scale = initialScale * (dist / touchStartDist);
+                applyTransform();
+                return;
+            }
+
+            if (!isDrawing || currentTool === 'text') return;
+            e.preventDefault();
+
+            const coords = getCoords(e);
+            ctx.lineCap = 'round';
+            ctx.lineJoin = 'round';
+
+            if (currentTool === 'shape') {
+                lastX = coords.x;
+                lastY = coords.y;
+                
+                ctx.putImageData(snapshot, 0, 0); 
+                ctx.beginPath();
+                ctx.strokeStyle = color;
+                ctx.lineWidth = penSize / scale;
+
+                if (currentShape === 'line') {
+                    ctx.moveTo(startX, startY);
+                    ctx.lineTo(coords.x, coords.y);
+                } else if (currentShape === 'rect') {
+                    ctx.strokeRect(startX, startY, coords.x - startX, coords.y - startY);
+                } else if (currentShape === 'circle') {
+                    let radius = Math.sqrt(Math.pow(coords.x - startX, 2) + Math.pow(coords.y - startY, 2));
+                    ctx.arc(startX, startY, radius, 0, 2 * Math.PI);
+                } else if (currentShape === 'triangle') {
+                    ctx.moveTo(startX, startY);
+                    ctx.lineTo(coords.x, coords.y);
+                    ctx.lineTo(startX - (coords.x - startX), coords.y);
+                    ctx.closePath();
+                }
+                ctx.stroke();
+                return;
+            }
+
+            if (currentTool === 'eraser') {
+                ctx.strokeStyle = 'black'; 
+                ctx.lineWidth = eraserSize / scale; 
+            } else {
+                ctx.strokeStyle = color;
+                ctx.lineWidth = penSize / scale; 
+            }
+
+            ctx.lineTo(coords.x, coords.y);
+            ctx.stroke();
+
+            socket.emit('drawing', {
+                x0: prevX, y0: prevY,
+                x1: coords.x, y1: coords.y,
+                color: ctx.strokeStyle, size: ctx.lineWidth
+            });
+            
+            prevX = coords.x;
+            prevY = coords.y;
+        }
+
+        function endAction() {
+            if (isDrawing) {
+                isDrawing = false;
+                if (currentTool === 'shape') {
+                    socket.emit('drawShape', {
+                        shape: currentShape,
+                        x0: startX, y0: startY,
+                        x1: lastX, y1: lastY,
+                        color: color, size: penSize / scale
+                    });
+                }
+                ctx.closePath();
+                saveState();
+            }
+        }
+
+        // ============================================
+        // SERVER SE DATA RECEIVE KARNE WALE FUNCTIONS
+        // ============================================
+
+        socket.on('drawing', (data) => {
+            ctx.lineCap = 'round';
+            ctx.lineJoin = 'round';
+            ctx.strokeStyle = data.color;
+            ctx.lineWidth = data.size;
+            ctx.beginPath();
+            ctx.moveTo(data.x0, data.y0);
+            ctx.lineTo(data.x1, data.y1);
+            ctx.stroke();
+            ctx.closePath();
+        });
+
+        socket.on('drawShape', (data) => {
+            ctx.lineCap = 'round';
+            ctx.lineJoin = 'round';
+            ctx.strokeStyle = data.color;
+            ctx.lineWidth = data.size;
+            ctx.beginPath();
+
+            if (data.shape === 'line') {
+                ctx.moveTo(data.x0, data.y0);
+                ctx.lineTo(data.x1, data.y1);
+            } else if (data.shape === 'rect') {
+                ctx.strokeRect(data.x0, data.y0, data.x1 - data.x0, data.y1 - data.y0);
+            } else if (data.shape === 'circle') {
+                let radius = Math.sqrt(Math.pow(data.x1 - data.x0, 2) + Math.pow(data.y1 - data.y0, 2));
+                ctx.arc(data.x0, data.y0, radius, 0, 2 * Math.PI);
+            } else if (data.shape === 'triangle') {
+                ctx.moveTo(data.x0, data.y0);
+                ctx.lineTo(data.x1, data.y1);
+                ctx.lineTo(data.x0 - (data.x1 - data.x0), data.y1);
+                ctx.closePath();
+            }
+            ctx.stroke();
+            saveState(); 
+        });
+
+        socket.on('chatMessage', (data) => {
+            const chatMessages = document.getElementById('chat-messages');
+            chatMessages.innerHTML += `<div class="msg"><span class="msg-sender">${data.sender}</span>${data.msg}</div>`;
+            chatMessages.scrollTop = chatMessages.scrollHeight;
+
+            if (!chatOpen) {
+                unreadCount++;
+                document.getElementById('chat-badge').innerText = unreadCount;
+                document.getElementById('chat-badge').style.display = 'block';
+            }
+        });
+
+        // NAYA: Text receive karna
+        socket.on('drawText', (data) => {
+            ctx.fillStyle = data.color;
+            ctx.font = data.size + "px 'Segoe UI', sans-serif";
+            ctx.fillText(data.text, data.x, data.y);
+            saveState();
+        });
+
+        // NAYA: Clear command receive karna
+        socket.on('clearCanvas', () => {
+            // false bhej rahe hain taaki yeh wapas server ko clear signal na bheje
+            clearAll(false);
+        });
+
+        // ============================================
+
+        canvas.addEventListener('mousedown', startAction);
+        canvas.addEventListener('mousemove', moveAction);
+        canvas.addEventListener('mouseup', endAction);
+        canvas.addEventListener('mouseout', endAction);
+
+        canvas.addEventListener('touchstart', (e) => {
+            if (e.touches.length === 2) {
+                touchStartDist = Math.hypot(e.touches[0].clientX - e.touches[1].clientX, e.touches[0].clientY - e.touches[1].clientY);
+                initialScale = scale;
+            } else {
+                startAction(e);
+            }
+        }, { passive: false });
+        canvas.addEventListener('touchmove', moveAction, { passive: false });
+        canvas.addEventListener('touchend', endAction);
+
+        function applyTransform() {
+            ctx.setTransform(1, 0, 0, 1, 0, 0);
+            const ratio = window.devicePixelRatio || 1;
+            ctx.scale(ratio * scale, ratio * scale);
+            ctx.translate(offsetX, offsetY);
+        }
+
+        setupCanvas();
+        applyTransform();
+        saveState(); 
+
+        window.addEventListener('resize', () => {
+            let lastState = history[history.length - 1];
+            setupCanvas();
+            applyTransform();
+            if(lastState) loadState(lastState);
+        });
+    </script>
+</body>
+</html>
