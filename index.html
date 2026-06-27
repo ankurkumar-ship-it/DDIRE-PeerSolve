@@ -46,6 +46,17 @@
         #chat-input:focus { border-color: #2ecc71; }
         #send-btn { background: #2ecc71; color: black; border: none; padding: 8px 15px; border-radius: 8px; font-weight: bold; cursor: pointer; }
         #whiteboard { background: black; display: block; touch-action: none; cursor: crosshair; position: absolute; top:0; left:0; z-index: 1;}
+
+        /* MOBILE FIXES */
+        @media (max-width: 768px) {
+            .toolbar { top: auto !important; flex-wrap: wrap; justify-content: center; width: 95%; left: 50% !important; transform: translateX(-50%); gap: 8px; padding: 8px; }
+            #ui-left { bottom: 65px !important; } 
+            #ui-right { bottom: 10px !important; } 
+            .tool-btn, .action-btn { font-size: 11px; padding: 5px 10px; } 
+            .size-wrapper input[type=range] { width: 50px; } 
+            #shape-menu { top: auto; bottom: 130px; left: 50%; transform: translateX(-50%); }
+            #chat-container { width: 90%; right: 5%; top: 20px; bottom: 130px; }
+        }
     </style>
 </head>
 <body>
@@ -71,10 +82,10 @@
     </div>
 
     <div id="shape-menu">
-        <button class="shape-btn" onclick="selectShape('line')" title="Line">➖</button>
-        <button class="shape-btn" onclick="selectShape('rect')" title="Rectangle">⬜</button>
-        <button class="shape-btn" onclick="selectShape('circle')" title="Circle">⭕</button>
-        <button class="shape-btn" onclick="selectShape('triangle')" title="Triangle">🔺</button>
+        <button class="shape-btn" onclick="selectShape('line')">➖</button>
+        <button class="shape-btn" onclick="selectShape('rect')">⬜</button>
+        <button class="shape-btn" onclick="selectShape('circle')">⭕</button>
+        <button class="shape-btn" onclick="selectShape('triangle')">🔺</button>
     </div>
 
     <div id="ui-right" class="toolbar">
@@ -108,11 +119,26 @@
     <script>
         const socket = io();
 
+        // 1. Naam poochna
         let userName = localStorage.getItem('ddire_username');
         if (!userName) {
             userName = prompt("Welcome to DDIRE-PeerSolve! Please enter your Name:") || "User";
             localStorage.setItem('ddire_username', userName);
         }
+
+        // 2. Room number poochna (Naya Feature)
+        let roomId = prompt(`Hi ${userName}! Apne dost se connect hone ke liye ek 'Room Number' daalein (e.g. 101):`);
+        if (!roomId) roomId = "PublicRoom"; // Agar blank chhod diya toh public
+
+        // Server ko batao ki ye room join karna hai
+        socket.emit('joinRoom', roomId);
+
+        // Agar room full ho toh error dena
+        socket.on('roomFull', () => {
+            alert("Oops! Yeh Room pehle se full hai (Max 2 log allow hain). Please page refresh karke koi naya Room Number dalein.");
+            window.location.reload();
+        });
+
 
         const canvas = document.getElementById('whiteboard');
         const ctx = canvas.getContext('2d');
@@ -253,7 +279,6 @@
         function undo() { if (history.length > 1) { redoStack.push(history.pop()); loadState(history[history.length - 1]); } }
         function redo() { if (redoStack.length > 0) { let nextState = redoStack.pop(); history.push(nextState); loadState(nextState); } }
         
-        // NAYA: clearAll function update ki gayi hai
         function clearAll(emitSignal = false) {
             ctx.setTransform(1, 0, 0, 1, 0, 0);
             const ratio = window.devicePixelRatio || 1;
@@ -261,11 +286,7 @@
             fillBlackBackground();
             applyTransform();
             saveState();
-            
-            // Agar button daba kar clear kiya hai, toh dost ko bhi signal bhejo
-            if (emitSignal) {
-                socket.emit('clearCanvas');
-            }
+            if (emitSignal) socket.emit('clearCanvas');
         }
 
         function getCoords(e) {
@@ -278,7 +299,6 @@
             };
         }
 
-        // --- Drawing Logic ---
         function startAction(e) {
             if(e.target.closest('.toolbar') || e.target.closest('#chat-container') || e.target.closest('#shape-menu')) return;
             if (e.touches && e.touches.length > 1) return; 
@@ -293,8 +313,6 @@
                     ctx.font = fontSize + "px 'Segoe UI', sans-serif";
                     ctx.fillText(text, coords.x, coords.y);
                     saveState();
-                    
-                    // NAYA: Text ko server par bhej rahe hain
                     socket.emit('drawText', { text: text, x: coords.x, y: coords.y, color: color, size: fontSize });
                 }
                 return; 
@@ -395,10 +413,7 @@
             }
         }
 
-        // ============================================
-        // SERVER SE DATA RECEIVE KARNE WALE FUNCTIONS
-        // ============================================
-
+        // SERVER EVENTS
         socket.on('drawing', (data) => {
             ctx.lineCap = 'round';
             ctx.lineJoin = 'round';
@@ -448,7 +463,6 @@
             }
         });
 
-        // NAYA: Text receive karna
         socket.on('drawText', (data) => {
             ctx.fillStyle = data.color;
             ctx.font = data.size + "px 'Segoe UI', sans-serif";
@@ -456,13 +470,9 @@
             saveState();
         });
 
-        // NAYA: Clear command receive karna
         socket.on('clearCanvas', () => {
-            // false bhej rahe hain taaki yeh wapas server ko clear signal na bheje
             clearAll(false);
         });
-
-        // ============================================
 
         canvas.addEventListener('mousedown', startAction);
         canvas.addEventListener('mousemove', moveAction);
