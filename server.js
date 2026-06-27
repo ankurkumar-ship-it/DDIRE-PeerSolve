@@ -11,42 +11,53 @@ app.get('/', (req, res) => {
     res.sendFile(__dirname + '/index.html');
 });
 
-// Jab koi dost connect hoga (Live Pipe)
 io.on('connection', (socket) => {
-    console.log('Ek naya user connect hua! ID:', socket.id);
+    console.log('Ek naya user aaya! ID:', socket.id);
 
-    // Pen aur Eraser ka live data
+    // 🚪 NAYA: Room Join Karne Ka Logic (Max 2 users)
+    socket.on('joinRoom', (roomId) => {
+        // Check karo ki room mein pehle se kitne log hain
+        const room = io.sockets.adapter.rooms.get(roomId);
+        const roomSize = room ? room.size : 0;
+
+        if (roomSize >= 2) {
+            // Agar 2 log hain, toh 3rd ko roko
+            socket.emit('roomFull'); 
+        } else {
+            // Agar jagah hai, toh room mein entry do
+            socket.join(roomId);
+            socket.roomId = roomId; // Socket ko uska room number yaad dila do
+            console.log(`User ${socket.id} ne room ${roomId} join kiya. (Total: ${roomSize + 1})`);
+        }
+    });
+
+    // 🔒 Ab 'broadcast' sabko nahi, sirf uske apne "Room" (socket.roomId) mein jayega
+    
     socket.on('drawing', (data) => {
-        socket.broadcast.emit('drawing', data);
+        if(socket.roomId) socket.to(socket.roomId).emit('drawing', data);
     });
 
-    // Shapes ka data
     socket.on('drawShape', (data) => {
-        socket.broadcast.emit('drawShape', data);
+        if(socket.roomId) socket.to(socket.roomId).emit('drawShape', data);
     });
 
-    // Chat Message ka data
     socket.on('chatMessage', (data) => {
-        socket.broadcast.emit('chatMessage', data);
+        if(socket.roomId) socket.to(socket.roomId).emit('chatMessage', data);
     });
 
-    // Text likhne ka data (NAYA)
     socket.on('drawText', (data) => {
-        socket.broadcast.emit('drawText', data);
+        if(socket.roomId) socket.to(socket.roomId).emit('drawText', data);
     });
 
-    // Canvas Clear karne ka signal (NAYA)
     socket.on('clearCanvas', () => {
-        socket.broadcast.emit('clearCanvas');
+        if(socket.roomId) socket.to(socket.roomId).emit('clearCanvas');
     });
 
-    // Jab koi dost website band karega
     socket.on('disconnect', () => {
         console.log('User disconnect ho gaya:', socket.id);
     });
 });
 
-// Server ko port 3000 par chalu karein
 server.listen(3000, () => {
     console.log('Server is running on http://localhost:3000');
 });
