@@ -509,5 +509,15 @@
             if(lastState) loadState(lastState);
         });
     </script>
+    <script>
+    // Service Worker Register (App Install karne ki power)
+    if ('serviceWorker' in navigator) {
+        window.addEventListener('load', () => {
+            navigator.serviceWorker.register('/sw.js')
+            .then(() => console.log('PWA Ready! App Installable hai.'))
+            .catch(err => console.log('PWA Error:', err));
+        });
+    }
+</script>
 </body>
 </html>
