@@ -11,6 +11,10 @@ app.get('/', (req, res) => {
     res.sendFile(__dirname + '/index.html');
 });
 
+app.get('/manifest.json', (req, res) => res.sendFile(__dirname + '/manifest.json'));
+app.get('/sw.js', (req, res) => res.sendFile(__dirname + '/sw.js'));
+app.get('/icon.png', (req, res) => res.sendFile(__dirname + '/icon.png'));
+
 io.on('connection', (socket) => {
     console.log('Ek naya user aaya! ID:', socket.id);
 
