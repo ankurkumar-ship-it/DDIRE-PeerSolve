@@ -1,7 +1,7 @@
 {
   "name": "DDIRE-PeerSolve",
   "short_name": "PeerSolve",
-  "start_url": "/",
+  "start_url": "https://ddire-peersolve.onrender.com",
   "display": "standalone",
   "background_color": "#000000",
   "theme_color": "#2ecc71",
@@ -16,5 +16,13 @@
       "sizes": "512x512",
       "type": "image/png"
     }
+  ],
+  "dir": "ltr",
+  "lang": "en",
+  "orientation": "any",
+  "categories": [
+    "design",
+    "graphics",
+    "productivity"
   ]
 }
