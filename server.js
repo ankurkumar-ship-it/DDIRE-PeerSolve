@@ -56,7 +56,15 @@ io.on('connection', (socket) => {
     socket.on('clearCanvas', () => {
         if(socket.roomId) socket.to(socket.roomId).emit('clearCanvas');
     });
+    // Dost ko Undo ka signal bhejna (Sirf uske Room mein)
+    socket.on('undo', () => {
+      if(socket.roomId) socket.to(socket.roomId).emit('undo');
+    });
 
+    // Dost ko Redo ka signal bhejna (Sirf uske Room mein)
+    socket.on('redo', () => {
+      if(socket.roomId) socket.to(socket.roomId).emit('redo');
+    });
     socket.on('disconnect', () => {
         console.log('User disconnect ho gaya:', socket.id);
     });
