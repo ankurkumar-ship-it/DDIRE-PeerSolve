@@ -277,8 +277,22 @@
             };
         }
 
-        function undo() { if (history.length > 1) { redoStack.push(history.pop()); loadState(history[history.length - 1]); } }
-        function redo() { if (redoStack.length > 0) { let nextState = redoStack.pop(); history.push(nextState); loadState(nextState); } }
+        function undo(emitSignal = true) { 
+            if (history.length > 1) { 
+                redoStack.push(history.pop()); 
+                loadState(history[history.length - 1]); 
+                if (emitSignal) socket.emit('undo');
+            } 
+        }
+
+        function redo(emitSignal = true) { 
+            if (redoStack.length > 0) { 
+                let nextState = redoStack.pop(); 
+                history.push(nextState); 
+                loadState(nextState); 
+                if (emitSignal) socket.emit('redo');
+            } 
+        }
         
         function clearAll(emitSignal = false) {
             ctx.setTransform(1, 0, 0, 1, 0, 0);
@@ -474,7 +488,13 @@
         socket.on('clearCanvas', () => {
             clearAll(false);
         });
+        socket.on('undo', () => {
+            undo(false); // Dost ka signal aane par sirf screen par undo karega, wapas signal nahi bhejega
+        });
 
+        socket.on('redo', () => {
+            redo(false);
+        });
         canvas.addEventListener('mousedown', startAction);
         canvas.addEventListener('mousemove', moveAction);
         canvas.addEventListener('mouseup', endAction);
