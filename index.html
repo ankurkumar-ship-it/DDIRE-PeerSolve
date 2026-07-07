@@ -6,7 +6,7 @@
     <title>DDIRE-PeerSolve - Premium Dashboard</title>
     <link rel="manifest" href="/manifest.json">
     <style>
-        body { margin: 0; overflow: hidden; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background: #000; color: white; }
+        body { margin: 0; overflow: hidden; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background: #0a0a0a; color: white; }
         .toolbar { position: absolute; top: 20px; background: #1a1a1a; padding: 8px 15px; border-radius: 40px; border: 1px solid #333; display: flex; align-items: center; gap: 15px; box-shadow: 0 4px 20px rgba(0,0,0,0.5); z-index: 10; pointer-events: auto; }
         #ui-left { left: 20px; }
         #ui-right { right: 20px; }
@@ -34,6 +34,7 @@
         .btn-clear:hover { background: rgba(231, 76, 60, 0.1); }
         .btn-save { color: #3498db; border-color: rgba(52, 152, 219, 0.3); }
         .btn-save:hover { background: rgba(52, 152, 219, 0.1); }
+        .zoom-controls { display: flex; gap: 5px; align-items: center; }
         
         .btn-chat { border-color: #2ecc71; color: #2ecc71; display: flex; align-items: center; gap: 5px; position: relative;}
         #chat-container { position: absolute; right: 20px; top: 75px; bottom: 20px; width: 320px; background: #1a1a1a; border: 1px solid #333; border-radius: 15px; display: none; flex-direction: column; pointer-events: auto; z-index: 10; box-shadow: 0 10px 30px rgba(0,0,0,0.8); }
@@ -49,6 +50,7 @@
         #chat-input { flex-grow: 1; padding: 10px; border-radius: 8px; border: 1px solid #333; background: #000; color: white; outline: none; font-size: 13px;}
         #chat-input:focus { border-color: #2ecc71; }
         #send-btn { background: #2ecc71; color: black; border: none; padding: 8px 15px; border-radius: 8px; font-weight: bold; cursor: pointer; }
+        
         #whiteboard { background: black; display: block; touch-action: none; cursor: crosshair; position: absolute; top:0; left:0; z-index: 1;}
 
         /* MOBILE FIXES */
@@ -63,7 +65,8 @@
         }
     </style>
 </head>
-<body>
+<!-- Right Click Default Menu Off Kar Diya -->
+<body oncontextmenu="return false;">
 
     <div id="ui-left" class="toolbar">
         <div class="color-wrapper">
@@ -93,9 +96,12 @@
     </div>
 
     <div id="ui-right" class="toolbar">
-        <!-- Naye Zoom Buttons -->
-        <button class="action-btn" onclick="zoomIn()">Zoom ➕</button>
-        <button class="action-btn" onclick="zoomOut()">Zoom ➖</button>
+        <!-- Upgraded Zoom Controls -->
+        <div class="zoom-controls">
+            <button class="action-btn" onclick="zoomOut()">➖</button>
+            <button class="action-btn" id="zoom-percentage" onclick="resetZoom()">100%</button>
+            <button class="action-btn" onclick="zoomIn()">➕</button>
+        </div>
         <div class="divider"></div>
         <button class="action-btn" onclick="undo()">Undo</button>
         <button class="action-btn" onclick="redo()">Redo</button>
@@ -166,9 +172,13 @@
         let history = [];
         let redoStack = [];
         
+        // --- ZOOM & PAN VARIABLES ---
         let scale = 1;
-        let offsetX = 0;
-        let offsetY = 0;
+        let panX = 0;
+        let panY = 0;
+        let isPanning = false;
+        let panStartX = 0;
+        let panStartY = 0;
         let touchStartDist = 0;
         let initialScale = 1;
 
@@ -192,43 +202,49 @@
             ctx.fillRect(-99999, -99999, 199999, 199999);
         }
 
-        // --- NAYA ZOOM SYSTEM ---
-        function zoomIn() {
-            scale += 0.2;
-            if (scale > 3) scale = 3; // Max zoom limit
+        // --- NEW ZOOM & PAN LOGIC ---
+        function setZoom(newScale) {
+            if (newScale > 5) newScale = 5; // Max 500% zoom
+            if (newScale < 0.2) newScale = 0.2; // Min 20% zoom
+            
+            // Zoom ko hamesha screen ke center point par focus rakhna
+            let cx = window.innerWidth / 2;
+            let cy = window.innerHeight / 2;
+            
+            panX = cx - (cx - panX) * (newScale / scale);
+            panY = cy - (cy - panY) * (newScale / scale);
+            
+            scale = newScale;
             applyTransform();
         }
 
-        function zoomOut() {
-            scale -= 0.2;
-            if (scale < 0.5) scale = 0.5; // Min zoom limit
+        function zoomIn() { setZoom(scale + 0.2); }
+        function zoomOut() { setZoom(scale - 0.2); }
+        function resetZoom() {
+            scale = 1;
+            panX = 0;
+            panY = 0;
             applyTransform();
         }
 
         function applyTransform() {
-            ctx.setTransform(1, 0, 0, 1, 0, 0);
-            const ratio = window.devicePixelRatio || 1;
-            // Removed context scaling so that history saves smoothly
-            ctx.scale(ratio, ratio); 
-            ctx.translate(offsetX, offsetY);
-
-            // Canvas ko visually CSS ke through zoom karna
-            canvas.style.transform = `scale(${scale})`;
+            canvas.style.transform = `translate(${panX}px, ${panY}px) scale(${scale})`;
             canvas.style.transformOrigin = "top left";
+            document.getElementById('zoom-percentage').innerText = Math.round(scale * 100) + "%";
         }
 
+        // Mouse click ya touch hone par screen ka exact coordinate nikalna (Pan & Zoom ke baad)
         function getCoords(e) {
             let rect = canvas.getBoundingClientRect();
             let clientX = e.clientX || (e.touches ? e.touches[0].clientX : 0);
             let clientY = e.clientY || (e.touches ? e.touches[0].clientY : 0);
             
-            // Updated formula so mouse matches perfectly even when zoomed
             return {
-                x: ((clientX - rect.left) / scale) - offsetX,
-                y: ((clientY - rect.top) / scale) - offsetY
+                x: (clientX - rect.left) / scale,
+                y: (clientY - rect.top) / scale
             };
         }
-        // ------------------------
+        // ----------------------------
 
         function saveToGallery() {
             const imageURL = canvas.toDataURL("image/png", 1.0);
@@ -317,7 +333,9 @@
             ctx.setTransform(1, 0, 0, 1, 0, 0); 
             history.push(canvas.toDataURL("image/png", 1.0));
             redoStack = []; 
-            applyTransform(); 
+            // Reset internal canvas scale to maintain image quality
+            const ratio = window.devicePixelRatio || 1;
+            ctx.scale(ratio, ratio); 
         }
 
         function loadState(dataUrl) {
@@ -327,7 +345,8 @@
                 ctx.setTransform(1, 0, 0, 1, 0, 0);
                 ctx.clearRect(0, 0, canvas.width, canvas.height);
                 ctx.drawImage(img, 0, 0);
-                applyTransform();
+                const ratio = window.devicePixelRatio || 1;
+                ctx.scale(ratio, ratio);
             };
         }
 
@@ -351,16 +370,25 @@
         function clearAll(emitSignal = false) {
             ctx.setTransform(1, 0, 0, 1, 0, 0);
             const ratio = window.devicePixelRatio || 1;
-            ctx.clearRect(0, 0, canvas.width * ratio, canvas.height * ratio);
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
             fillBlackBackground();
-            applyTransform();
+            ctx.scale(ratio, ratio);
             saveState();
             if (emitSignal) socket.emit('clearCanvas');
         }
 
         function startAction(e) {
             if(e.target.closest('.toolbar') || e.target.closest('#chat-container') || e.target.closest('#shape-menu')) return;
-            if (e.touches && e.touches.length > 1) return; 
+            
+            // WINDOWS MOUSE PANNING (Right Click)
+            if (e.button === 2) { 
+                isPanning = true;
+                panStartX = e.clientX;
+                panStartY = e.clientY;
+                canvas.style.cursor = 'grab';
+                return;
+            }
+            if (e.type.includes('mouse') && e.button !== 0) return; // Ignore scroll wheel clicks
             
             const coords = getCoords(e);
             
@@ -393,13 +421,12 @@
         }
 
         function moveAction(e) {
-            if (e.touches && e.touches.length === 2) {
-                e.preventDefault();
-                let dist = Math.hypot(e.touches[0].clientX - e.touches[1].clientX, e.touches[0].clientY - e.touches[1].clientY);
-                scale = initialScale * (dist / touchStartDist);
-                // Limits for pinch zoom
-                if (scale > 3) scale = 3;
-                if (scale < 0.5) scale = 0.5;
+            // MOUSE PANNING LOGIC
+            if (isPanning && e.type.includes('mouse')) {
+                panX += e.clientX - panStartX;
+                panY += e.clientY - panStartY;
+                panStartX = e.clientX;
+                panStartY = e.clientY;
                 applyTransform();
                 return;
             }
@@ -459,7 +486,14 @@
             prevY = coords.y;
         }
 
-        function endAction() {
+        function endAction(e) {
+            // END PANNING
+            if (isPanning && (!e || !e.touches || e.touches.length < 2)) {
+                isPanning = false;
+                updateUI(); // Reset Cursor back to pen/eraser
+                return;
+            }
+
             if (isDrawing) {
                 isDrawing = false;
                 if (currentTool === 'shape') {
@@ -532,31 +566,59 @@
             saveState();
         });
 
-        socket.on('clearCanvas', () => {
-            clearAll(false);
-        });
-        socket.on('undo', () => {
-            undo(false); 
-        });
-
-        socket.on('redo', () => {
-            redo(false);
-        });
+        socket.on('clearCanvas', () => { clearAll(false); });
+        socket.on('undo', () => { undo(false); });
+        socket.on('redo', () => { redo(false); });
         
         canvas.addEventListener('mousedown', startAction);
         canvas.addEventListener('mousemove', moveAction);
         canvas.addEventListener('mouseup', endAction);
         canvas.addEventListener('mouseout', endAction);
 
+        // --- ANDROID TOUCH 2-FINGER PAN & ZOOM ---
         canvas.addEventListener('touchstart', (e) => {
             if (e.touches.length === 2) {
+                isPanning = true;
                 touchStartDist = Math.hypot(e.touches[0].clientX - e.touches[1].clientX, e.touches[0].clientY - e.touches[1].clientY);
                 initialScale = scale;
+                panStartX = (e.touches[0].clientX + e.touches[1].clientX) / 2;
+                panStartY = (e.touches[0].clientY + e.touches[1].clientY) / 2;
             } else {
                 startAction(e);
             }
         }, { passive: false });
-        canvas.addEventListener('touchmove', moveAction, { passive: false });
+
+        canvas.addEventListener('touchmove', (e) => {
+            if (e.touches && e.touches.length === 2) {
+                e.preventDefault();
+                
+                let currentX = (e.touches[0].clientX + e.touches[1].clientX) / 2;
+                let currentY = (e.touches[0].clientY + e.touches[1].clientY) / 2;
+                
+                // Pehle canvas ko move (pan) karein
+                panX += currentX - panStartX;
+                panY += currentY - panStartY;
+                
+                // Fir zoom level nikalein
+                let dist = Math.hypot(e.touches[0].clientX - e.touches[1].clientX, e.touches[0].clientY - e.touches[1].clientY);
+                let newScale = initialScale * (dist / touchStartDist);
+                if (newScale > 5) newScale = 5;
+                if (newScale < 0.2) newScale = 0.2;
+                
+                // Zoom hamesha dono ungliyo ke beech me hona chahiye
+                panX = currentX - (currentX - panX) * (newScale / scale);
+                panY = currentY - (currentY - panY) * (newScale / scale);
+                
+                scale = newScale;
+                panStartX = currentX;
+                panStartY = currentY;
+                
+                applyTransform();
+            } else {
+                moveAction(e);
+            }
+        }, { passive: false });
+        
         canvas.addEventListener('touchend', endAction);
 
         setupCanvas();
