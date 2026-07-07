@@ -3,12 +3,12 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
-    <title>DDIRE-PeerSolve - Infinity Dashboard</title>
+    <title>DDIRE-PeerSolve - Premium Dashboard</title>
     <link rel="manifest" href="/manifest.json">
     <style>
-        body { margin: 0; overflow: hidden; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background: #0a0a0a; color: white; touch-action: none; }
+        body { margin: 0; overflow: hidden; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background: #000; color: white; touch-action: none; }
         
-        /* Updated Toolbar for Horizontal Scroll on Mobile */
+        /* Mobile Horizontal Scroll UI (Buttons screen nahi gherenge) */
         .toolbar { position: absolute; top: 20px; background: #1a1a1a; padding: 10px 15px; border-radius: 40px; border: 1px solid #333; display: flex; align-items: center; gap: 12px; box-shadow: 0 4px 20px rgba(0,0,0,0.5); z-index: 10; pointer-events: auto; }
         #ui-left { left: 20px; max-width: calc(100vw - 40px); }
         #ui-right { right: 20px; max-width: calc(100vw - 40px); }
@@ -27,9 +27,6 @@
         .tool-btn:hover { background: #2a2a2a; color: white; }
         .active-tool { border-color: #2ecc71; color: #2ecc71; background: rgba(46, 204, 113, 0.1); }
         
-        /* Move Tool Highlight */
-        #t-move.active-tool { border-color: #f1c40f; color: #f1c40f; background: rgba(241, 196, 15, 0.1); }
-
         #shape-menu { display: none; position: absolute; top: 70px; left: 190px; background: #1a1a1a; padding: 10px; border-radius: 15px; border: 1px solid #333; z-index: 20; grid-template-columns: repeat(2, 1fr); gap: 10px; box-shadow: 0 10px 30px rgba(0,0,0,0.8); }
         .shape-btn { background: #222; border: 1px solid #444; color: white; padding: 10px 15px; border-radius: 10px; cursor: pointer; transition: 0.2s; font-size: 18px; display: flex; justify-content: center; align-items: center; }
         .shape-btn:hover { background: #2ecc71; color: black; border-color: #2ecc71; }
@@ -46,8 +43,6 @@
         .btn-save { color: #3498db; border-color: rgba(52, 152, 219, 0.3); }
         .btn-save:hover { background: rgba(52, 152, 219, 0.1); }
         
-        .zoom-controls { display: flex; gap: 5px; align-items: center; flex-shrink: 0; }
-        
         .btn-chat { border-color: #2ecc71; color: #2ecc71; display: flex; align-items: center; gap: 5px; position: relative; flex-shrink: 0;}
         #chat-container { position: absolute; right: 20px; top: 75px; bottom: 20px; width: 320px; background: #1a1a1a; border: 1px solid #333; border-radius: 15px; display: none; flex-direction: column; pointer-events: auto; z-index: 10; box-shadow: 0 10px 30px rgba(0,0,0,0.8); }
         #chat-header { background: #222; padding: 12px 15px; font-weight: bold; border-top-left-radius: 15px; border-top-right-radius: 15px; border-bottom: 1px solid #333; display: flex; justify-content: space-between; align-items: center; }
@@ -63,14 +58,14 @@
         #chat-input:focus { border-color: #2ecc71; }
         #send-btn { background: #2ecc71; color: black; border: none; padding: 8px 15px; border-radius: 8px; font-weight: bold; cursor: pointer; }
         
-        #whiteboard { background: #000; display: block; position: absolute; top:0; left:0; z-index: 1;}
+        #whiteboard { background: black; display: block; touch-action: none; cursor: crosshair; position: absolute; top:0; left:0; z-index: 1;}
 
         /* MOBILE FIXES - Horizontal Scroll for Toolbars */
         @media (max-width: 768px) {
             .toolbar { 
                 top: auto !important; 
-                flex-wrap: nowrap; /* Taki buttons ek hi line me rahein */
-                overflow-x: auto; /* Scroll allow karein */
+                flex-wrap: nowrap; 
+                overflow-x: auto; 
                 -webkit-overflow-scrolling: touch; 
                 justify-content: flex-start; 
                 width: 95%; 
@@ -79,7 +74,7 @@
                 padding: 10px;
                 border-radius: 15px;
             }
-            .toolbar::-webkit-scrollbar { display: none; } /* Scrollbar hide */
+            .toolbar::-webkit-scrollbar { display: none; } 
             
             #ui-left { bottom: 70px !important; } 
             #ui-right { bottom: 10px !important; } 
@@ -100,8 +95,6 @@
         </div>
         <div class="divider"></div>
         <div class="tools-wrapper">
-            <!-- NAYA "MOVE" TOOL ANDROID USERS KE LIYE -->
-            <button class="tool-btn" id="t-move" onclick="setTool('move')">🖐 Move</button>
             <button class="tool-btn active-tool" id="t-pen" onclick="setTool('pen')">Pen</button>
             <button class="tool-btn" id="t-eraser" onclick="setTool('eraser')">Eraser</button>
             <button class="tool-btn" id="t-text" onclick="setTool('text')">Text</button>
@@ -122,12 +115,6 @@
     </div>
 
     <div id="ui-right" class="toolbar">
-        <div class="zoom-controls">
-            <button class="action-btn" onclick="zoomOut()">➖</button>
-            <button class="action-btn" id="zoom-percentage" onclick="resetZoom()">100%</button>
-            <button class="action-btn" onclick="zoomIn()">➕</button>
-        </div>
-        <div class="divider"></div>
         <button class="action-btn" onclick="undo()">Undo</button>
         <button class="action-btn" onclick="redo()">Redo</button>
         <button class="action-btn btn-save" onclick="saveToGallery()">💾 Save</button>
@@ -145,7 +132,7 @@
             <span class="close-chat-btn" onclick="toggleChat()">✖</span>
         </div>
         <div id="chat-messages">
-            <div class="msg" style="align-self: center; background: transparent; color: #888; font-size: 11px;">Welcome to Infinity Dashboard</div>
+            <div class="msg" style="align-self: center; background: transparent; color: #888; font-size: 11px;">Welcome to DDIRE-PeerSolve</div>
         </div>
         <div id="chat-input-area">
             <input type="text" id="chat-input" placeholder="Type a message..." onkeypress="handleEnter(event)">
@@ -194,88 +181,34 @@
         
         let history = [];
         let redoStack = [];
-        
-        // --- INFINITY BOARD SETTINGS ---
-        let scale = 1;
-        let panX = 0;
-        let panY = 0;
-        let isPanning = false;
-        let panStartX = 0;
-        let panStartY = 0;
-        let touchStartDist = 0;
-        let initialScale = 1;
-        
-        const BOARD_SIZE = 4000; // Giant Canvas (4000x4000 pixels)
 
         let chatOpen = false;
         let unreadCount = 0;
 
         function setupCanvas() {
             const ratio = window.devicePixelRatio || 1;
-            canvas.width = BOARD_SIZE * ratio;
-            canvas.height = BOARD_SIZE * ratio;
-            canvas.style.width = BOARD_SIZE + 'px';
-            canvas.style.height = BOARD_SIZE + 'px';
+            canvas.width = window.innerWidth * ratio;
+            canvas.height = window.innerHeight * ratio;
+            canvas.style.width = window.innerWidth + 'px';
+            canvas.style.height = window.innerHeight + 'px';
             ctx.scale(ratio, ratio);
             ctx.imageSmoothingEnabled = true;
             ctx.imageSmoothingQuality = 'high';
             fillBlackBackground();
-
-            // Center the user on the giant canvas on start
-            panX = (window.innerWidth - BOARD_SIZE) / 2;
-            panY = (window.innerHeight - BOARD_SIZE) / 2;
-            applyTransform();
         }
 
         function fillBlackBackground() {
             ctx.fillStyle = 'black';
-            ctx.fillRect(0, 0, BOARD_SIZE, BOARD_SIZE);
-            // Draw faint grid for infinity feel (optional, makes it look premium)
-            ctx.strokeStyle = '#111';
-            ctx.lineWidth = 1;
-            for(let i=0; i<BOARD_SIZE; i+=50) {
-                ctx.beginPath(); ctx.moveTo(i, 0); ctx.lineTo(i, BOARD_SIZE); ctx.stroke();
-                ctx.beginPath(); ctx.moveTo(0, i); ctx.lineTo(BOARD_SIZE, i); ctx.stroke();
-            }
-        }
-
-        function setZoom(newScale) {
-            if (newScale > 5) newScale = 5; 
-            if (newScale < 0.2) newScale = 0.2; 
-            
-            let cx = window.innerWidth / 2;
-            let cy = window.innerHeight / 2;
-            
-            panX = cx - (cx - panX) * (newScale / scale);
-            panY = cy - (cy - panY) * (newScale / scale);
-            
-            scale = newScale;
-            applyTransform();
-        }
-
-        function zoomIn() { setZoom(scale + 0.2); }
-        function zoomOut() { setZoom(scale - 0.2); }
-        function resetZoom() {
-            scale = 1;
-            panX = (window.innerWidth - BOARD_SIZE) / 2;
-            panY = (window.innerHeight - BOARD_SIZE) / 2;
-            applyTransform();
-        }
-
-        function applyTransform() {
-            canvas.style.transform = `translate(${panX}px, ${panY}px) scale(${scale})`;
-            canvas.style.transformOrigin = "top left";
-            document.getElementById('zoom-percentage').innerText = Math.round(scale * 100) + "%";
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
         }
 
         function getCoords(e) {
             let rect = canvas.getBoundingClientRect();
             let clientX = e.clientX || (e.touches ? e.touches[0].clientX : 0);
             let clientY = e.clientY || (e.touches ? e.touches[0].clientY : 0);
-            
             return {
-                x: (clientX - rect.left) / scale,
-                y: (clientY - rect.top) / scale
+                x: clientX - rect.left,
+                y: clientY - rect.top
             };
         }
 
@@ -283,7 +216,7 @@
             const imageURL = canvas.toDataURL("image/png", 1.0);
             const link = document.createElement("a");
             link.href = imageURL;
-            link.download = "DDIRE_Infinity_Note.png";
+            link.download = "DDIRE_Dashboard_Note.png";
             document.body.appendChild(link);
             link.click();
             document.body.removeChild(link);
@@ -339,9 +272,7 @@
             const slider = document.getElementById('size-slider');
             const label = document.getElementById('size-label');
             
-            if(currentTool === 'move') {
-                canvas.style.cursor = "grab";
-            } else if(currentTool === 'eraser') {
+            if(currentTool === 'eraser') {
                 slider.value = eraserSize;
                 label.innerText = `Size: ${eraserSize}px`;
                 canvas.style.cursor = `url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10" stroke="white" stroke-width="2" fill="none"/></svg>') 12 12, auto`;
@@ -354,7 +285,7 @@
             }
         }
 
-        function setColor(c) { color = c; if (currentTool !== 'shape' && currentTool !== 'move') setTool('pen'); updateUI(); }
+        function setColor(c) { color = c; if (currentTool !== 'shape') setTool('pen'); updateUI(); }
         function setTool(t) { currentTool = t; document.getElementById('shape-menu').style.display = 'none'; updateUI(); }
         
         function updateSize(val) {
@@ -364,9 +295,9 @@
         }
 
         function saveState() {
-            if (history.length > 20) history.shift(); 
+            if (history.length > 30) history.shift(); 
             ctx.setTransform(1, 0, 0, 1, 0, 0); 
-            history.push(canvas.toDataURL("image/jpeg", 0.5)); // Memory save ke liye JPG
+            history.push(canvas.toDataURL("image/png", 1.0));
             redoStack = []; 
             const ratio = window.devicePixelRatio || 1;
             ctx.scale(ratio, ratio); 
@@ -413,16 +344,7 @@
 
         function startAction(e) {
             if(e.target.closest('.toolbar') || e.target.closest('#chat-container') || e.target.closest('#shape-menu')) return;
-            
-            // "MOVE" TOOL LOGIC (Android par 1 ungli se pan)
-            if (currentTool === 'move' || e.button === 2) { 
-                isPanning = true;
-                panStartX = e.clientX || (e.touches ? e.touches[0].clientX : 0);
-                panStartY = e.clientY || (e.touches ? e.touches[0].clientY : 0);
-                canvas.style.cursor = 'grabbing';
-                return;
-            }
-            if (e.type.includes('mouse') && e.button !== 0) return;
+            if (e.touches && e.touches.length > 1) return; 
             
             const coords = getCoords(e);
             
@@ -430,7 +352,7 @@
                 let text = prompt("DDIRE Dashboard par kya likhna hai?");
                 if (text) {
                     ctx.fillStyle = color;
-                    let fontSize = 24 / scale;
+                    let fontSize = 24;
                     ctx.font = fontSize + "px 'Segoe UI', sans-serif";
                     ctx.fillText(text, coords.x, coords.y);
                     saveState();
@@ -455,18 +377,6 @@
         }
 
         function moveAction(e) {
-            // PANNING RUNNING
-            if (isPanning) {
-                let currentX = e.clientX || (e.touches ? e.touches[0].clientX : 0);
-                let currentY = e.clientY || (e.touches ? e.touches[0].clientY : 0);
-                panX += currentX - panStartX;
-                panY += currentY - panStartY;
-                panStartX = currentX;
-                panStartY = currentY;
-                applyTransform();
-                return;
-            }
-
             if (!isDrawing || currentTool === 'text') return;
             e.preventDefault();
 
@@ -481,7 +391,7 @@
                 ctx.putImageData(snapshot, 0, 0); 
                 ctx.beginPath();
                 ctx.strokeStyle = color;
-                ctx.lineWidth = penSize / scale;
+                ctx.lineWidth = penSize;
 
                 if (currentShape === 'line') {
                     ctx.moveTo(startX, startY);
@@ -503,10 +413,10 @@
 
             if (currentTool === 'eraser') {
                 ctx.strokeStyle = 'black'; 
-                ctx.lineWidth = eraserSize / scale; 
+                ctx.lineWidth = eraserSize; 
             } else {
                 ctx.strokeStyle = color;
-                ctx.lineWidth = penSize / scale; 
+                ctx.lineWidth = penSize; 
             }
 
             ctx.lineTo(coords.x, coords.y);
@@ -523,12 +433,6 @@
         }
 
         function endAction(e) {
-            if (isPanning && (!e || !e.touches || e.touches.length < 2)) {
-                isPanning = false;
-                if(currentTool === 'move') canvas.style.cursor = 'grab';
-                return;
-            }
-
             if (isDrawing) {
                 isDrawing = false;
                 if (currentTool === 'shape') {
@@ -536,7 +440,7 @@
                         shape: currentShape,
                         x0: startX, y0: startY,
                         x1: lastX, y1: lastY,
-                        color: color, size: penSize / scale
+                        color: color, size: penSize
                     });
                 }
                 ctx.closePath();
@@ -609,58 +513,17 @@
         canvas.addEventListener('mousemove', moveAction);
         canvas.addEventListener('mouseup', endAction);
         canvas.addEventListener('mouseout', endAction);
-
-        canvas.addEventListener('touchstart', (e) => {
-            if (e.touches.length === 2 && currentTool !== 'move') {
-                isPanning = true;
-                touchStartDist = Math.hypot(e.touches[0].clientX - e.touches[1].clientX, e.touches[0].clientY - e.touches[1].clientY);
-                initialScale = scale;
-                panStartX = (e.touches[0].clientX + e.touches[1].clientX) / 2;
-                panStartY = (e.touches[0].clientY + e.touches[1].clientY) / 2;
-            } else {
-                startAction(e);
-            }
-        }, { passive: false });
-
-        canvas.addEventListener('touchmove', (e) => {
-            if (e.touches && e.touches.length === 2 && currentTool !== 'move') {
-                e.preventDefault();
-                let currentX = (e.touches[0].clientX + e.touches[1].clientX) / 2;
-                let currentY = (e.touches[0].clientY + e.touches[1].clientY) / 2;
-                
-                panX += currentX - panStartX;
-                panY += currentY - panStartY;
-                
-                let dist = Math.hypot(e.touches[0].clientX - e.touches[1].clientX, e.touches[0].clientY - e.touches[1].clientY);
-                let newScale = initialScale * (dist / touchStartDist);
-                if (newScale > 5) newScale = 5;
-                if (newScale < 0.2) newScale = 0.2;
-                
-                panX = currentX - (currentX - panX) * (newScale / scale);
-                panY = currentY - (currentY - panY) * (newScale / scale);
-                
-                scale = newScale;
-                panStartX = currentX;
-                panStartY = currentY;
-                
-                applyTransform();
-            } else {
-                moveAction(e);
-            }
-        }, { passive: false });
-        
+        canvas.addEventListener('touchstart', startAction, { passive: false });
+        canvas.addEventListener('touchmove', moveAction, { passive: false });
         canvas.addEventListener('touchend', endAction);
 
         setupCanvas();
         saveState(); 
 
-        // Fix resize issue logic
-        let resizeTimeout;
         window.addEventListener('resize', () => {
-            clearTimeout(resizeTimeout);
-            resizeTimeout = setTimeout(() => {
-                applyTransform();
-            }, 200);
+            let lastState = history[history.length - 1];
+            setupCanvas();
+            if(lastState) loadState(lastState);
         });
     </script>
     <script>
