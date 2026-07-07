@@ -32,7 +32,6 @@
         .action-btn:hover { background: #2a2a2a; color: white; }
         .btn-clear { color: #e74c3c; border-color: rgba(231, 76, 60, 0.3); }
         .btn-clear:hover { background: rgba(231, 76, 60, 0.1); }
-        /* Naya CSS Save Button ke liye */
         .btn-save { color: #3498db; border-color: rgba(52, 152, 219, 0.3); }
         .btn-save:hover { background: rgba(52, 152, 219, 0.1); }
         
@@ -94,9 +93,12 @@
     </div>
 
     <div id="ui-right" class="toolbar">
+        <!-- Naye Zoom Buttons -->
+        <button class="action-btn" onclick="zoomIn()">Zoom ➕</button>
+        <button class="action-btn" onclick="zoomOut()">Zoom ➖</button>
+        <div class="divider"></div>
         <button class="action-btn" onclick="undo()">Undo</button>
         <button class="action-btn" onclick="redo()">Redo</button>
-        <!-- Naya Save Button Yahan Add Kiya Hai -->
         <button class="action-btn btn-save" onclick="saveToGallery()">💾 Save</button>
         <button class="action-btn btn-clear" onclick="clearAll(true)">Clear</button>
         <div class="divider"></div>
@@ -133,14 +135,12 @@
             localStorage.setItem('ddire_username', userName);
         }
 
-        // 2. Room number poochna (Naya Feature)
+        // 2. Room number poochna
         let roomId = prompt(`Hi ${userName}! Apne dost se connect hone ke liye ek 'Room Number' daalein (e.g. 101):`);
-        if (!roomId) roomId = "PublicRoom"; // Agar blank chhod diya toh public
+        if (!roomId) roomId = "PublicRoom";
 
-        // Server ko batao ki ye room join karna hai
         socket.emit('joinRoom', roomId);
 
-        // Agar room full ho toh error dena
         socket.on('roomFull', () => {
             alert("Oops! Yeh Room pehle se full hai (Max 2 log allow hain). Please page refresh karke koi naya Room Number dalein.");
             window.location.reload();
@@ -192,16 +192,49 @@
             ctx.fillRect(-99999, -99999, 199999, 199999);
         }
 
-        // NAYA FUNCTION: Gallery me Image Save karne ke liye
-        function saveToGallery() {
-            // Canvas ko PNG image mein convert karein
-            const imageURL = canvas.toDataURL("image/png", 1.0);
+        // --- NAYA ZOOM SYSTEM ---
+        function zoomIn() {
+            scale += 0.2;
+            if (scale > 3) scale = 3; // Max zoom limit
+            applyTransform();
+        }
+
+        function zoomOut() {
+            scale -= 0.2;
+            if (scale < 0.5) scale = 0.5; // Min zoom limit
+            applyTransform();
+        }
+
+        function applyTransform() {
+            ctx.setTransform(1, 0, 0, 1, 0, 0);
+            const ratio = window.devicePixelRatio || 1;
+            // Removed context scaling so that history saves smoothly
+            ctx.scale(ratio, ratio); 
+            ctx.translate(offsetX, offsetY);
+
+            // Canvas ko visually CSS ke through zoom karna
+            canvas.style.transform = `scale(${scale})`;
+            canvas.style.transformOrigin = "top left";
+        }
+
+        function getCoords(e) {
+            let rect = canvas.getBoundingClientRect();
+            let clientX = e.clientX || (e.touches ? e.touches[0].clientX : 0);
+            let clientY = e.clientY || (e.touches ? e.touches[0].clientY : 0);
             
-            // Ek aisi link banayein jo background mein click ho aur file download kar de
+            // Updated formula so mouse matches perfectly even when zoomed
+            return {
+                x: ((clientX - rect.left) / scale) - offsetX,
+                y: ((clientY - rect.top) / scale) - offsetY
+            };
+        }
+        // ------------------------
+
+        function saveToGallery() {
+            const imageURL = canvas.toDataURL("image/png", 1.0);
             const link = document.createElement("a");
             link.href = imageURL;
-            link.download = "DDIRE_Dashboard_Note.png"; // Yahan se file ka default naam set hota hai
-            
+            link.download = "DDIRE_Dashboard_Note.png";
             document.body.appendChild(link);
             link.click();
             document.body.removeChild(link);
@@ -325,16 +358,6 @@
             if (emitSignal) socket.emit('clearCanvas');
         }
 
-        function getCoords(e) {
-            let rect = canvas.getBoundingClientRect();
-            let clientX = e.clientX || (e.touches ? e.touches[0].clientX : 0);
-            let clientY = e.clientY || (e.touches ? e.touches[0].clientY : 0);
-            return {
-                x: (clientX - rect.left - offsetX) / scale,
-                y: (clientY - rect.top - offsetY) / scale
-            };
-        }
-
         function startAction(e) {
             if(e.target.closest('.toolbar') || e.target.closest('#chat-container') || e.target.closest('#shape-menu')) return;
             if (e.touches && e.touches.length > 1) return; 
@@ -374,6 +397,9 @@
                 e.preventDefault();
                 let dist = Math.hypot(e.touches[0].clientX - e.touches[1].clientX, e.touches[0].clientY - e.touches[1].clientY);
                 scale = initialScale * (dist / touchStartDist);
+                // Limits for pinch zoom
+                if (scale > 3) scale = 3;
+                if (scale < 0.5) scale = 0.5;
                 applyTransform();
                 return;
             }
@@ -510,12 +536,13 @@
             clearAll(false);
         });
         socket.on('undo', () => {
-            undo(false); // Dost ka signal aane par sirf screen par undo karega, wapas signal nahi bhejega
+            undo(false); 
         });
 
         socket.on('redo', () => {
             redo(false);
         });
+        
         canvas.addEventListener('mousedown', startAction);
         canvas.addEventListener('mousemove', moveAction);
         canvas.addEventListener('mouseup', endAction);
@@ -532,13 +559,6 @@
         canvas.addEventListener('touchmove', moveAction, { passive: false });
         canvas.addEventListener('touchend', endAction);
 
-        function applyTransform() {
-            ctx.setTransform(1, 0, 0, 1, 0, 0);
-            const ratio = window.devicePixelRatio || 1;
-            ctx.scale(ratio * scale, ratio * scale);
-            ctx.translate(offsetX, offsetY);
-        }
-
         setupCanvas();
         applyTransform();
         saveState(); 
@@ -551,18 +571,16 @@
         });
     </script>
     <script>
-    // Service Worker Register (App Install karne ki power)
     if ('serviceWorker' in navigator) {
         window.addEventListener('load', () => {
             navigator.serviceWorker.register('/sw.js')
-            .then(() => console.log('PWA Ready! App Installable hai.'))
+            .then(() => console.log('PWA Ready!'))
             .catch(err => console.log('PWA Error:', err));
         });
     }
-</script>
+    </script>
     <style>
         #ad-container { position: absolute; bottom: 0; width: 100%; text-align: center; z-index: 100; background: transparent; }
-        /* Mobile ke liye Ad ko upar bhejne ka code */
         @media (max-width: 768px) { #ad-container { bottom: auto; top: 0; } }
     </style>
 
@@ -577,8 +595,6 @@
   };
 </script>
 <script src="https://www.highperformanceformat.com/ed2356e0c17f4997d4e61e9b19512508/invoke.js"></script>
-
-        
-        </div>
+    </div>
 </body>
 </html>
