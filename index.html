@@ -32,6 +32,10 @@
         .action-btn:hover { background: #2a2a2a; color: white; }
         .btn-clear { color: #e74c3c; border-color: rgba(231, 76, 60, 0.3); }
         .btn-clear:hover { background: rgba(231, 76, 60, 0.1); }
+        /* Naya CSS Save Button ke liye */
+        .btn-save { color: #3498db; border-color: rgba(52, 152, 219, 0.3); }
+        .btn-save:hover { background: rgba(52, 152, 219, 0.1); }
+        
         .btn-chat { border-color: #2ecc71; color: #2ecc71; display: flex; align-items: center; gap: 5px; position: relative;}
         #chat-container { position: absolute; right: 20px; top: 75px; bottom: 20px; width: 320px; background: #1a1a1a; border: 1px solid #333; border-radius: 15px; display: none; flex-direction: column; pointer-events: auto; z-index: 10; box-shadow: 0 10px 30px rgba(0,0,0,0.8); }
         #chat-header { background: #222; padding: 12px 15px; font-weight: bold; border-top-left-radius: 15px; border-top-right-radius: 15px; border-bottom: 1px solid #333; display: flex; justify-content: space-between; align-items: center; }
@@ -92,6 +96,8 @@
     <div id="ui-right" class="toolbar">
         <button class="action-btn" onclick="undo()">Undo</button>
         <button class="action-btn" onclick="redo()">Redo</button>
+        <!-- Naya Save Button Yahan Add Kiya Hai -->
+        <button class="action-btn btn-save" onclick="saveToGallery()">💾 Save</button>
         <button class="action-btn btn-clear" onclick="clearAll(true)">Clear</button>
         <div class="divider"></div>
         <button class="action-btn btn-chat" onclick="toggleChat()">
@@ -184,6 +190,21 @@
         function fillBlackBackground() {
             ctx.fillStyle = 'black';
             ctx.fillRect(-99999, -99999, 199999, 199999);
+        }
+
+        // NAYA FUNCTION: Gallery me Image Save karne ke liye
+        function saveToGallery() {
+            // Canvas ko PNG image mein convert karein
+            const imageURL = canvas.toDataURL("image/png", 1.0);
+            
+            // Ek aisi link banayein jo background mein click ho aur file download kar de
+            const link = document.createElement("a");
+            link.href = imageURL;
+            link.download = "DDIRE_Dashboard_Note.png"; // Yahan se file ka default naam set hota hai
+            
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
         }
 
         function toggleChat() {
