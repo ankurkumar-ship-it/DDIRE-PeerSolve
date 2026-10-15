@@ -9,47 +9,82 @@
     <meta name="author" content="Ankur">
     <meta name="google-site-verification" content="6jiXl6s2IAC-aG8T4irxKVlaAU4hgpy3pNOG39xYv3U" />
     <style>
+        :root {
+            --accent: #10b981;
+            --accent-glow: rgba(16, 185, 129, 0.25);
+            --danger: #ef4444;
+            --info: #3b82f6;
+            --warning: #f59e0b;
+            --panel-bg: rgba(18, 18, 22, 0.88);
+            --panel-border: rgba(255, 255, 255, 0.12);
+            --btn-bg: rgba(255, 255, 255, 0.05);
+            --btn-hover: rgba(255, 255, 255, 0.12);
+        }
+
+        * {
+            box-sizing: border-box;
+            -webkit-tap-highlight-color: transparent;
+        }
+
         body { 
             margin: 0; 
             overflow: hidden; 
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; 
+            font-family: 'Inter', 'Segoe UI', system-ui, -apple-system, sans-serif; 
             background: #000; 
-            color: white; 
+            color: #f3f4f6; 
             touch-action: none; 
             user-select: none;
             -webkit-user-select: none;
         }
+
+        /* Prevent SVG icons from blocking button clicks */
+        svg {
+            pointer-events: none;
+            flex-shrink: 0;
+        }
         
-        /* Premium Glassmorphism Toolbars */
+        /* Super Glassmorphism Toolbars */
         .toolbar { 
             position: absolute; 
             top: 20px; 
-            background: rgba(24, 24, 24, 0.92); 
-            backdrop-filter: blur(10px);
-            -webkit-backdrop-filter: blur(10px);
-            padding: 10px 15px; 
-            border-radius: 40px; 
-            border: 1px solid #383838; 
+            background: var(--panel-bg); 
+            backdrop-filter: blur(16px);
+            -webkit-backdrop-filter: blur(16px);
+            padding: 8px 14px; 
+            border-radius: 50px; 
+            border: 1px solid var(--panel-border); 
             display: flex; 
             align-items: center; 
             gap: 10px; 
-            box-shadow: 0 6px 25px rgba(0,0,0,0.7); 
+            box-shadow: 0 10px 35px rgba(0, 0, 0, 0.8), inset 0 1px 0 rgba(255, 255, 255, 0.08); 
             z-index: 10; 
             pointer-events: auto; 
         }
         #ui-left { left: 20px; max-width: calc(100vw - 40px); }
         #ui-right { right: 20px; max-width: calc(100vw - 40px); }
         
-        .divider { width: 1px; height: 24px; background: #444; flex-shrink: 0; }
+        .divider { width: 1px; height: 24px; background: rgba(255, 255, 255, 0.14); flex-shrink: 0; }
         
-        /* Colors & Color Picker */
+        /* Color Swatches & Custom Picker */
         .color-wrapper { display: flex; gap: 8px; align-items: center; flex-shrink: 0; }
-        .color-btn { width: 24px; height: 24px; border-radius: 50%; cursor: pointer; border: 2px solid transparent; transition: 0.2s; flex-shrink: 0; }
-        .color-btn.white { background: #fff; }
-        .color-btn.red { background: #e74c3c; }
-        .color-btn.green { background: #2ecc71; }
-        .color-btn.blue { background: #3498db; }
-        .active-color { border: 2px solid #fff; transform: scale(1.15); box-shadow: 0 0 10px rgba(255,255,255,0.4); }
+        .color-btn { 
+            width: 24px; 
+            height: 24px; 
+            border-radius: 50%; 
+            cursor: pointer; 
+            border: 2px solid rgba(255,255,255,0.2); 
+            transition: all 0.2s ease; 
+            flex-shrink: 0; 
+        }
+        .color-btn.white { background: #ffffff; }
+        .color-btn.red { background: #ef4444; }
+        .color-btn.green { background: #10b981; }
+        .color-btn.blue { background: #3b82f6; }
+        .active-color { 
+            border: 2px solid #fff; 
+            transform: scale(1.18); 
+            box-shadow: 0 0 12px rgba(255, 255, 255, 0.5); 
+        }
         
         .color-picker-input {
             width: 26px;
@@ -62,90 +97,179 @@
             flex-shrink: 0;
         }
         .color-picker-input::-webkit-color-swatch-wrapper { padding: 0; }
-        .color-picker-input::-webkit-color-swatch { border: 2px solid #555; border-radius: 50%; }
+        .color-picker-input::-webkit-color-swatch { border: 2px solid rgba(255,255,255,0.4); border-radius: 50%; }
 
-        /* Tools & Action Buttons */
-        .tools-wrapper { display: flex; gap: 8px; align-items: center; flex-shrink: 0; }
+        /* Modern Tool & Action Buttons */
+        .tools-wrapper { display: flex; gap: 6px; align-items: center; flex-shrink: 0; }
         .tool-btn, .action-btn { 
-            background: #252525; 
-            color: #ccc; 
-            border: 1px solid #3a3a3a; 
-            border-radius: 20px; 
-            padding: 6px 13px; 
-            font-size: 13px; 
+            background: var(--btn-bg); 
+            color: #d1d5db; 
+            border: 1px solid rgba(255, 255, 255, 0.08); 
+            border-radius: 30px; 
+            padding: 7px 13px; 
+            font-size: 12.5px; 
             font-weight: 600; 
+            letter-spacing: 0.2px;
             cursor: pointer; 
-            transition: 0.2s; 
+            transition: all 0.2s ease; 
             white-space: nowrap; 
             flex-shrink: 0; 
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
         }
-        .tool-btn:hover, .action-btn:hover { background: #333; color: white; }
-        .active-tool { border-color: #2ecc71; color: #2ecc71; background: rgba(46, 204, 113, 0.15); }
+        .tool-btn:hover, .action-btn:hover { 
+            background: var(--btn-hover); 
+            color: #ffffff; 
+            border-color: rgba(255, 255, 255, 0.2);
+            transform: translateY(-1px);
+        }
+        .active-tool { 
+            border-color: var(--accent) !important; 
+            color: var(--accent) !important; 
+            background: var(--accent-glow) !important; 
+            box-shadow: 0 0 15px rgba(16, 185, 129, 0.2);
+        }
         
-        /* Shape Menu */
+        /* Clean Shape Dropdown Menu */
         #shape-menu { 
             display: none; 
             position: absolute; 
             top: 75px; 
-            left: 200px; 
-            background: rgba(26, 26, 26, 0.96); 
+            left: 210px; 
+            background: var(--panel-bg); 
+            backdrop-filter: blur(16px);
+            -webkit-backdrop-filter: blur(16px);
             padding: 10px; 
-            border-radius: 15px; 
-            border: 1px solid #444; 
+            border-radius: 16px; 
+            border: 1px solid var(--panel-border); 
             z-index: 20; 
-            grid-template-columns: repeat(3, 1fr); 
+            grid-template-columns: repeat(2, 1fr); 
             gap: 8px; 
-            box-shadow: 0 10px 30px rgba(0,0,0,0.8); 
+            box-shadow: 0 12px 35px rgba(0,0,0,0.85); 
         }
-        .shape-btn { background: #262626; border: 1px solid #444; color: white; padding: 10px 14px; border-radius: 10px; cursor: pointer; transition: 0.2s; font-size: 18px; display: flex; justify-content: center; align-items: center; }
-        .shape-btn:hover { background: #2ecc71; color: black; border-color: #2ecc71; }
+        .shape-btn { 
+            background: var(--btn-bg); 
+            border: 1px solid rgba(255, 255, 255, 0.08); 
+            color: #e5e7eb; 
+            padding: 9px 14px; 
+            border-radius: 10px; 
+            cursor: pointer; 
+            transition: 0.2s; 
+            font-size: 12.5px; 
+            font-weight: 600;
+            display: flex; 
+            align-items: center; 
+            gap: 8px;
+        }
+        .shape-btn:hover { 
+            background: var(--accent); 
+            color: #000; 
+            border-color: var(--accent); 
+        }
         
-        /* Size Slider */
-        .size-wrapper { display: flex; align-items: center; gap: 8px; font-size: 12px; color: #aaa; flex-shrink: 0; }
+        /* Brush Size Slider */
+        .size-wrapper { display: flex; align-items: center; gap: 8px; font-size: 12px; font-weight: 600; color: #9ca3af; flex-shrink: 0; padding: 0 4px; }
         input[type=range] { -webkit-appearance: none; width: 75px; background: transparent; cursor: pointer; }
-        input[type=range]::-webkit-slider-runnable-track { height: 4px; background: #444; border-radius: 2px; }
-        input[type=range]::-webkit-slider-thumb { -webkit-appearance: none; height: 14px; width: 14px; border-radius: 50%; background: #2ecc71; margin-top: -5px; }
+        input[type=range]::-webkit-slider-runnable-track { height: 4px; background: rgba(255,255,255,0.2); border-radius: 2px; }
+        input[type=range]::-webkit-slider-thumb { -webkit-appearance: none; height: 14px; width: 14px; border-radius: 50%; background: var(--accent); margin-top: -5px; box-shadow: 0 0 8px var(--accent); }
         
-        /* Special Button Colors */
-        .btn-room { color: #f1c40f; border-color: rgba(241, 196, 15, 0.35); }
-        .btn-room:hover { background: rgba(241, 196, 15, 0.15); }
-        .btn-clear { color: #e74c3c; border-color: rgba(231, 76, 60, 0.35); }
-        .btn-clear:hover { background: rgba(231, 76, 60, 0.15); }
-        .btn-save { color: #3498db; border-color: rgba(52, 152, 219, 0.35); }
-        .btn-save:hover { background: rgba(52, 152, 219, 0.15); }
-        .btn-chat { border-color: #2ecc71; color: #2ecc71; display: flex; align-items: center; gap: 5px; position: relative; flex-shrink: 0;}
+        /* Specialized Action Button Accents */
+        .btn-room { color: var(--warning); border-color: rgba(245, 158, 11, 0.3); }
+        .btn-room:hover { background: rgba(245, 158, 11, 0.15); color: #fbbf24; border-color: var(--warning); }
         
-        /* Chat Container */
-        #chat-container { position: absolute; right: 20px; top: 75px; bottom: 20px; width: 320px; background: #181818; border: 1px solid #333; border-radius: 15px; display: none; flex-direction: column; pointer-events: auto; z-index: 15; box-shadow: 0 10px 30px rgba(0,0,0,0.85); }
-        #chat-header { background: #222; padding: 12px 15px; font-weight: bold; border-top-left-radius: 15px; border-top-right-radius: 15px; border-bottom: 1px solid #333; display: flex; justify-content: space-between; align-items: center; }
-        .close-chat-btn { cursor: pointer; color: #aaa; font-size: 20px; padding: 0 8px; }
-        .close-chat-btn:hover { color: #e74c3c; }
+        .btn-save { color: var(--info); border-color: rgba(59, 130, 246, 0.3); }
+        .btn-save:hover { background: rgba(59, 130, 246, 0.15); color: #60a5fa; border-color: var(--info); }
+        
+        .btn-clear { color: var(--danger); border-color: rgba(239, 68, 68, 0.3); }
+        .btn-clear:hover { background: rgba(239, 68, 68, 0.15); color: #f87171; border-color: var(--danger); }
+        
+        .btn-chat { border-color: var(--accent); color: var(--accent); position: relative; }
+        .btn-chat:hover { background: var(--accent-glow); color: #34d399; }
+        
+        /* Notification Badge */
+        #chat-badge {
+            display: none; 
+            position: absolute; 
+            top: -5px; 
+            right: -5px; 
+            background: var(--danger); 
+            color: white; 
+            border-radius: 50%; 
+            padding: 2px 6px; 
+            font-size: 10px;
+            font-weight: bold;
+            box-shadow: 0 2px 6px rgba(0,0,0,0.5);
+        }
+
+        /* Modern Chat Container */
+        #chat-container { 
+            position: absolute; 
+            right: 20px; 
+            top: 75px; 
+            bottom: 20px; 
+            width: 330px; 
+            background: var(--panel-bg); 
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
+            border: 1px solid var(--panel-border); 
+            border-radius: 18px; 
+            display: none; 
+            flex-direction: column; 
+            pointer-events: auto; 
+            z-index: 15; 
+            box-shadow: 0 15px 40px rgba(0,0,0,0.85); 
+            overflow: hidden;
+        }
+        #chat-header { 
+            background: rgba(255, 255, 255, 0.04); 
+            padding: 14px 16px; 
+            font-weight: 700; 
+            font-size: 13.5px;
+            border-bottom: 1px solid var(--panel-border); 
+            display: flex; 
+            justify-content: space-between; 
+            align-items: center; 
+        }
+        .close-chat-btn { 
+            cursor: pointer; 
+            color: #9ca3af; 
+            font-size: 12px; 
+            font-weight: 600;
+            padding: 4px 10px; 
+            border-radius: 6px;
+            background: rgba(255,255,255,0.06);
+            transition: 0.2s;
+        }
+        .close-chat-btn:hover { background: var(--danger); color: white; }
         
         #chat-messages { flex-grow: 1; padding: 15px; overflow-y: auto; display: flex; flex-direction: column; gap: 10px; }
-        .msg { background: #2c2c2c; padding: 8px 12px; border-radius: 10px; font-size: 13px; align-self: flex-start; max-width: 85%; word-wrap: break-word; }
-        .msg.self { background: #2ecc71; color: black; align-self: flex-end; }
-        .msg-sender { font-size: 10px; color: #aaa; margin-bottom: 3px; display: block; font-weight: 600; }
-        .msg.self .msg-sender { color: #145c32; text-align: right; }
-        #chat-input-area { display: flex; padding: 10px; border-top: 1px solid #333; gap: 8px; }
-        #chat-input { flex-grow: 1; padding: 10px; border-radius: 8px; border: 1px solid #333; background: #000; color: white; outline: none; font-size: 13px;}
-        #chat-input:focus { border-color: #2ecc71; }
-        #send-btn { background: #2ecc71; color: black; border: none; padding: 8px 15px; border-radius: 8px; font-weight: bold; cursor: pointer; }
+        .msg { background: rgba(255, 255, 255, 0.08); padding: 9px 13px; border-radius: 12px; font-size: 13px; align-self: flex-start; max-width: 85%; word-wrap: break-word; line-height: 1.4; }
+        .msg.self { background: var(--accent); color: #000; align-self: flex-end; font-weight: 500; }
+        .msg-sender { font-size: 10px; color: #9ca3af; margin-bottom: 3px; display: block; font-weight: 700; text-transform: uppercase; }
+        .msg.self .msg-sender { color: #064e3b; text-align: right; }
         
-        /* Whiteboard Canvas & Optional Grid */
+        #chat-input-area { display: flex; padding: 12px; border-top: 1px solid var(--panel-border); gap: 8px; background: rgba(0,0,0,0.3); }
+        #chat-input { flex-grow: 1; padding: 10px 12px; border-radius: 10px; border: 1px solid rgba(255,255,255,0.12); background: rgba(0,0,0,0.6); color: white; outline: none; font-size: 13px; }
+        #chat-input:focus { border-color: var(--accent); }
+        #send-btn { background: var(--accent); color: black; border: none; padding: 8px 16px; border-radius: 10px; font-weight: 700; font-size: 12.5px; cursor: pointer; transition: 0.2s; }
+        #send-btn:hover { opacity: 0.9; }
+        
+        /* Whiteboard Canvas & Grid */
         #whiteboard { background: #000; display: block; touch-action: none; cursor: crosshair; position: absolute; top:0; left:0; z-index: 1; }
         #grid-overlay {
             position: absolute;
             top: 0; left: 0; width: 100vw; height: 100vh;
             background-size: 35px 35px;
             background-image: 
-                linear-gradient(to right, rgba(255, 255, 255, 0.07) 1px, transparent 1px),
-                linear-gradient(to bottom, rgba(255, 255, 255, 0.07) 1px, transparent 1px);
+                linear-gradient(to right, rgba(255, 255, 255, 0.06) 1px, transparent 1px),
+                linear-gradient(to bottom, rgba(255, 255, 255, 0.06) 1px, transparent 1px);
             pointer-events: none;
             z-index: 2;
             display: none;
         }
 
-        /* Responsive Mobile Layout */
+        /* Responsive Mobile Dock Layout */
         @media (max-width: 768px) {
             .toolbar { 
                 top: auto !important; 
@@ -157,7 +281,7 @@
                 left: 50% !important; 
                 transform: translateX(-50%); 
                 padding: 9px 12px;
-                border-radius: 16px;
+                border-radius: 20px;
             }
             .toolbar::-webkit-scrollbar { display: none; } 
             
@@ -165,11 +289,11 @@
             #ui-right { bottom: 10px !important; } 
             .tool-btn, .action-btn { font-size: 12px; padding: 7px 11px; } 
             .size-wrapper input[type=range] { width: 55px; } 
-            #shape-menu { top: auto; bottom: 125px; left: 50%; transform: translateX(-50%); }
-            #chat-container { width: 90%; right: 5%; top: 65px; bottom: 130px; }
+            #shape-menu { top: auto; bottom: 130px; left: 50%; transform: translateX(-50%); width: 260px; }
+            #chat-container { width: 92%; right: 4%; top: 65px; bottom: 130px; }
         }
 
-        /* Safe Ad Container */
+        /* Ad Container */
         #ad-container { position: absolute; bottom: 0; width: 100%; height: 50px; text-align: center; z-index: 5; background: transparent; pointer-events: none; }
         #ad-container iframe { pointer-events: auto; }
         @media (max-width: 768px) { #ad-container { bottom: auto; top: 0; } }
@@ -181,18 +305,33 @@
     <div id="ui-left" class="toolbar">
         <div class="color-wrapper">
             <div class="color-btn white active-color" id="c-white" onclick="setColor('white')" title="White"></div>
-            <div class="color-btn red" id="c-red" onclick="setColor('#e74c3c')" title="Red"></div>
-            <div class="color-btn green" id="c-green" onclick="setColor('#2ecc71')" title="Green"></div>
-            <div class="color-btn blue" id="c-blue" onclick="setColor('#3498db')" title="Blue"></div>
-            <input type="color" id="c-custom" class="color-picker-input" value="#f1c40f" oninput="setColor(this.value, true)" title="Custom Color">
+            <div class="color-btn red" id="c-red" onclick="setColor('#ef4444')" title="Red"></div>
+            <div class="color-btn green" id="c-green" onclick="setColor('#10b981')" title="Green"></div>
+            <div class="color-btn blue" id="c-blue" onclick="setColor('#3b82f6')" title="Blue"></div>
+            <input type="color" id="c-custom" class="color-picker-input" value="#f59e0b" oninput="setColor(this.value, true)" title="Custom Color">
         </div>
         <div class="divider"></div>
         <div class="tools-wrapper">
-            <button class="tool-btn active-tool" id="t-pen" onclick="setTool('pen')">✏️ Pen</button>
-            <button class="tool-btn" id="t-eraser" onclick="setTool('eraser')">🧽 Eraser</button>
-            <button class="tool-btn" id="t-text" onclick="setTool('text')">🔤 Text</button>
-            <button class="tool-btn" id="t-shape" onclick="toggleShapeMenu()">Shapes ▼</button>
-            <button class="tool-btn" id="t-grid" onclick="toggleGrid()"># Grid</button>
+            <button class="tool-btn active-tool" id="t-pen" onclick="setTool('pen')">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M12 19l7-7 3 3-7 7-3-3z"/><path d="M18 13l-1.5-7.5L2 2l3.5 14.5L13 18l5-5z"/></svg>
+                Pen
+            </button>
+            <button class="tool-btn" id="t-eraser" onclick="setTool('eraser')">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M20 20H7L3 16C2 15 2 13 3 12L13 2L22 11L20 20Z"/><path d="M17 17L7 7"/></svg>
+                Eraser
+            </button>
+            <button class="tool-btn" id="t-text" onclick="setTool('text')">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><polyline points="4 7 4 4 20 4 20 7"/><line x1="9" y1="20" x2="15" y2="20"/><line x1="12" y1="4" x2="12" y2="20"/></svg>
+                Text
+            </button>
+            <button class="tool-btn" id="t-shape" onclick="toggleShapeMenu()">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><rect x="3" y="3" width="18" height="18" rx="2"/></svg>
+                Shapes
+            </button>
+            <button class="tool-btn" id="t-grid" onclick="toggleGrid()">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><rect x="3" y="3" width="18" height="18"/><line x1="3" y1="9" x2="21" y2="9"/><line x1="3" y1="15" x2="21" y2="15"/><line x1="9" y1="3" x2="9" y2="21"/><line x1="15" y1="3" x2="15" y2="21"/></svg>
+                Grid
+            </button>
         </div>
         <div class="divider"></div>
         <div class="size-wrapper">
@@ -201,28 +340,59 @@
         </div>
     </div>
 
-    <!-- Shapes Popup Menu -->
+    <!-- Shapes Popup Menu (Pure SVG + Text, No Emojis) -->
     <div id="shape-menu">
-        <button class="shape-btn" onclick="selectShape('line')" title="Line">➖</button>
-        <button class="shape-btn" onclick="selectShape('rect')" title="Rectangle">⬜</button>
-        <button class="shape-btn" onclick="selectShape('circle')" title="Circle">⭕</button>
-        <button class="shape-btn" onclick="selectShape('triangle')" title="Triangle">🔺</button>
-        <button class="shape-btn" onclick="selectShape('arrow')" title="Arrow">➡️</button>
-        <button class="shape-btn" onclick="selectShape('diamond')" title="Diamond">🔷</button>
+        <button class="shape-btn" onclick="selectShape('line')">
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><line x1="4" y1="20" x2="20" y2="4"/></svg>
+            Line
+        </button>
+        <button class="shape-btn" onclick="selectShape('rect')">
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><rect x="3" y="5" width="18" height="14" rx="2"/></svg>
+            Rectangle
+        </button>
+        <button class="shape-btn" onclick="selectShape('circle')">
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><circle cx="12" cy="12" r="9"/></svg>
+            Circle
+        </button>
+        <button class="shape-btn" onclick="selectShape('triangle')">
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><polygon points="12 3 22 20 2 20"/></svg>
+            Triangle
+        </button>
+        <button class="shape-btn" onclick="selectShape('arrow')">
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/></svg>
+            Arrow
+        </button>
+        <button class="shape-btn" onclick="selectShape('diamond')">
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><polygon points="12 2 22 12 12 22 2 12"/></svg>
+            Diamond
+        </button>
     </div>
 
     <!-- Right Toolbar: Room Info, Actions, Chat -->
     <div id="ui-right" class="toolbar">
-        <button class="action-btn btn-room" id="room-display" onclick="changeRoom()" title="Click to switch Room">🔑 Room</button>
+        <button class="action-btn btn-room" id="room-display" onclick="changeRoom()" title="Click to switch Room">Room</button>
         <div class="divider"></div>
-        <button class="action-btn" onclick="undo()">↩ Undo</button>
-        <button class="action-btn" onclick="redo()">↪ Redo</button>
-        <button class="action-btn btn-save" onclick="saveToGallery()">💾 Save</button>
-        <button class="action-btn btn-clear" onclick="clearAll(true)">🗑️ Clear</button>
+        <button class="action-btn" onclick="undo()">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M3 7v6h6"/><path d="M21 17a9 9 0 0 0-9-9 9 9 0 0 0-6 2.3L3 13"/></svg>
+            Undo
+        </button>
+        <button class="action-btn" onclick="redo()">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M21 7v6h-6"/><path d="M3 17a9 9 0 0 1 9-9 9 9 0 0 1 6 2.3l3 2.7"/></svg>
+            Redo
+        </button>
+        <button class="action-btn btn-save" onclick="saveToGallery()">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+            Save
+        </button>
+        <button class="action-btn btn-clear" onclick="clearAll(true)">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/><path d="M10 11v6"/><path d="M14 11v6"/></svg>
+            Clear
+        </button>
         <div class="divider"></div>
         <button class="action-btn btn-chat" onclick="toggleChat()">
-            💬 Chat
-            <span id="chat-badge" style="display:none; position:absolute; top:-5px; right:-5px; background:red; color:white; border-radius:50%; padding:2px 6px; font-size:10px;">0</span>
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
+            Chat
+            <span id="chat-badge">0</span>
         </button>
     </div>
 
@@ -230,10 +400,10 @@
     <div id="chat-container">
         <div id="chat-header">
             <span id="chat-room-title">DDIRE Chat</span>
-            <span class="close-chat-btn" onclick="toggleChat()">✖</span>
+            <span class="close-chat-btn" onclick="toggleChat()">Close</span>
         </div>
         <div id="chat-messages">
-            <div class="msg" style="align-self: center; background: transparent; color: #888; font-size: 11px;">Welcome to DDIRE-PeerSolve!</div>
+            <div class="msg" style="align-self: center; background: transparent; color: #888; font-size: 11px;">Connected to DDIRE-PeerSolve</div>
         </div>
         <div id="chat-input-area">
             <input type="text" id="chat-input" placeholder="Type a message..." onkeypress="handleEnter(event)">
@@ -251,23 +421,22 @@
     <script>
         const socket = io();
 
-        // User Name & Room Setup (100% English)
         let userName = localStorage.getItem('ddire_username');
         if (!userName) {
             userName = prompt("Welcome to DDIRE-PeerSolve! Please enter your Name:") || "Guest";
             localStorage.setItem('ddire_username', userName);
         }
 
-        let roomId = prompt(`Hi ${userName}! Enter a Room Code to connect with your partner (e.g., 101):`);
+        let roomId = prompt(`Hello ${userName}! Enter a Room Code to collaborate (e.g., 101):`);
         if (!roomId) roomId = "PublicRoom";
 
-        document.getElementById('room-display').innerText = `🔑 Room: ${roomId}`;
-        document.getElementById('chat-room-title').innerText = `Chat (Room: ${roomId})`;
+        document.getElementById('room-display').innerText = `Room: ${roomId}`;
+        document.getElementById('chat-room-title').innerText = `Room: ${roomId}`;
 
         socket.emit('joinRoom', roomId);
 
         socket.on('roomFull', () => {
-            alert("This Room is currently full (Max 2 users allowed). Please enter a different Room Code.");
+            alert("This Room is currently full (Maximum 2 users allowed). Please enter a different Room Code.");
             window.location.reload();
         });
 
@@ -338,7 +507,7 @@
             const imageURL = canvas.toDataURL("image/png", 1.0);
             const link = document.createElement("a");
             link.href = imageURL;
-            link.download = `DDIRE_Room_${roomId}_Note.png`;
+            link.download = `DDIRE_Room_${roomId}_Board.png`;
             document.body.appendChild(link);
             link.click();
             document.body.removeChild(link);
@@ -381,9 +550,9 @@
         function updateUI() {
             document.querySelectorAll('.color-btn').forEach(b => b.classList.remove('active-color'));
             if(color === 'white') document.getElementById('c-white').classList.add('active-color');
-            else if(color === '#e74c3c') document.getElementById('c-red').classList.add('active-color');
-            else if(color === '#2ecc71') document.getElementById('c-green').classList.add('active-color');
-            else if(color === '#3498db') document.getElementById('c-blue').classList.add('active-color');
+            else if(color === '#ef4444') document.getElementById('c-red').classList.add('active-color');
+            else if(color === '#10b981') document.getElementById('c-green').classList.add('active-color');
+            else if(color === '#3b82f6') document.getElementById('c-blue').classList.add('active-color');
 
             document.querySelectorAll('.tool-btn').forEach(b => {
                 if (b.id !== 't-grid') b.classList.remove('active-tool');
@@ -528,7 +697,7 @@
                 if (text) {
                     ctx.fillStyle = color;
                     let fontSize = 24;
-                    ctx.font = fontSize + "px 'Segoe UI', sans-serif";
+                    ctx.font = fontSize + "px 'Inter', 'Segoe UI', sans-serif";
                     ctx.fillText(text, coords.x, coords.y);
                     saveState();
                     socket.emit('drawText', { text: text, x: coords.x, y: coords.y, color: color, size: fontSize });
@@ -638,7 +807,7 @@
 
         socket.on('drawText', (data) => {
             ctx.fillStyle = data.color;
-            ctx.font = data.size + "px 'Segoe UI', sans-serif";
+            ctx.font = data.size + "px 'Inter', 'Segoe UI', sans-serif";
             ctx.fillText(data.text, data.x, data.y);
             saveState();
         });
