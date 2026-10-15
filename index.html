@@ -37,7 +37,6 @@
             -webkit-user-select: none;
         }
 
-        /* Prevent SVG icons from blocking button clicks */
         svg {
             pointer-events: none;
             flex-shrink: 0;
@@ -65,6 +64,73 @@
         
         .divider { width: 1px; height: 24px; background: rgba(255, 255, 255, 0.14); flex-shrink: 0; }
         
+        /* Live Active Users Badge */
+        #online-users-bar {
+            position: absolute;
+            top: 78px;
+            left: 20px;
+            background: var(--panel-bg);
+            backdrop-filter: blur(14px);
+            -webkit-backdrop-filter: blur(14px);
+            border: 1px solid var(--panel-border);
+            padding: 6px 14px;
+            border-radius: 30px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            font-size: 12px;
+            font-weight: 600;
+            color: #d1d5db;
+            z-index: 10;
+            box-shadow: 0 6px 20px rgba(0, 0, 0, 0.6);
+            pointer-events: none;
+        }
+        .user-pill {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            background: rgba(255, 255, 255, 0.06);
+            padding: 3px 10px;
+            border-radius: 20px;
+            border: 1px solid rgba(255, 255, 255, 0.08);
+        }
+        .online-dot {
+            width: 7px;
+            height: 7px;
+            background: var(--accent);
+            border-radius: 50%;
+            box-shadow: 0 0 8px var(--accent);
+        }
+
+        /* Join / Leave Toast Notification */
+        #status-toast {
+            position: absolute;
+            top: 80px;
+            left: 50%;
+            transform: translateX(-50%) translateY(-20px);
+            background: var(--panel-bg);
+            backdrop-filter: blur(16px);
+            -webkit-backdrop-filter: blur(16px);
+            border: 1px solid var(--panel-border);
+            padding: 8px 18px;
+            border-radius: 30px;
+            font-size: 12.5px;
+            font-weight: 600;
+            color: #fff;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.8);
+            z-index: 30;
+            opacity: 0;
+            pointer-events: none;
+            transition: all 0.3s ease;
+        }
+        #status-toast.show {
+            opacity: 1;
+            transform: translateX(-50%) translateY(0);
+        }
+
         /* Color Swatches & Custom Picker */
         .color-wrapper { display: flex; gap: 8px; align-items: center; flex-shrink: 0; }
         .color-btn { 
@@ -287,6 +353,21 @@
             
             #ui-left { bottom: 68px !important; } 
             #ui-right { bottom: 10px !important; } 
+            
+            #online-users-bar {
+                top: 56px;
+                left: 50%;
+                transform: translateX(-50%);
+                max-width: 92%;
+                white-space: nowrap;
+                overflow-x: auto;
+            }
+            #status-toast {
+                top: 102px;
+                width: max-content;
+                max-width: 90%;
+            }
+
             .tool-btn, .action-btn { font-size: 12px; padding: 7px 11px; } 
             .size-wrapper input[type=range] { width: 55px; } 
             #shape-menu { top: auto; bottom: 130px; left: 50%; transform: translateX(-50%); width: 260px; }
@@ -340,7 +421,16 @@
         </div>
     </div>
 
-    <!-- Shapes Popup Menu (Pure SVG + Text, No Emojis) -->
+    <!-- Live Online Users Indicator -->
+    <div id="online-users-bar">
+        <span>Online:</span>
+        <div id="users-list" style="display: flex; gap: 6px;"></div>
+    </div>
+
+    <!-- Join/Leave Popup Toast -->
+    <div id="status-toast"></div>
+
+    <!-- Shapes Popup Menu -->
     <div id="shape-menu">
         <button class="shape-btn" onclick="selectShape('line')">
             <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><line x1="4" y1="20" x2="20" y2="4"/></svg>
@@ -433,12 +523,42 @@
         document.getElementById('room-display').innerText = `Room: ${roomId}`;
         document.getElementById('chat-room-title').innerText = `Room: ${roomId}`;
 
-        socket.emit('joinRoom', roomId);
+        // Show self immediately in online list
+        updateOnlineUsers([{ name: userName }]);
+
+        // Emit roomId + userName to server
+        socket.emit('joinRoom', { roomId: roomId, userName: userName });
 
         socket.on('roomFull', () => {
             alert("This Room is currently full (Maximum 2 users allowed). Please enter a different Room Code.");
             window.location.reload();
         });
+
+        // Update live online users bar when someone joins or leaves
+        socket.on('roomUsers', (users) => {
+            updateOnlineUsers(users);
+        });
+
+        // Show toast notification when someone joins or leaves
+        let toastTimeout;
+        socket.on('userStatus', (data) => {
+            const toast = document.getElementById('status-toast');
+            const dotColor = data.action === 'joined' ? '#10b981' : '#ef4444';
+            toast.innerHTML = `<span class="online-dot" style="background:${dotColor}; box-shadow: 0 0 8px ${dotColor};"></span> ${data.user} ${data.action} the room`;
+            toast.classList.add('show');
+
+            clearTimeout(toastTimeout);
+            toastTimeout = setTimeout(() => {
+                toast.classList.remove('show');
+            }, 3000);
+        });
+
+        function updateOnlineUsers(users) {
+            const listEl = document.getElementById('users-list');
+            listEl.innerHTML = users.map(u => 
+                `<span class="user-pill"><span class="online-dot"></span>${u.name}</span>`
+            ).join('');
+        }
 
         function changeRoom() {
             let newRoom = prompt("Enter a new Room Code to switch:");
