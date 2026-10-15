@@ -1,75 +1,94 @@
 const express = require('express');
 const http = require('http');
 const { Server } = require('socket.io');
+const path = require('path');
 
 const app = express();
 const server = http.createServer(app);
 const io = new Server(server);
 
-// Jab koi website kholega, toh use index.html dikhegi
-app.get('/', (req, res) => {
-    res.sendFile(__dirname + '/index.html');
-});
+app.use(express.static(path.join(__dirname)));
 
-app.get('/manifest.json', (req, res) => res.sendFile(__dirname + '/manifest.json'));
-app.get('/sw.js', (req, res) => res.sendFile(__dirname + '/sw.js'));
-app.get('/icon.png', (req, res) => res.sendFile(__dirname + '/icon.png'));
+// Track users in each room
+const roomUsers = {};
 
 io.on('connection', (socket) => {
-    console.log('Ek naya user aaya! ID:', socket.id);
+    let currentRoom = null;
+    let currentUserName = "Guest";
 
-    // 🚪 NAYA: Room Join Karne Ka Logic (Max 2 users)
-    socket.on('joinRoom', (roomId) => {
-        // Check karo ki room mein pehle se kitne log hain
-        const room = io.sockets.adapter.rooms.get(roomId);
-        const roomSize = room ? room.size : 0;
+    socket.on('joinRoom', (data) => {
+        // Supports both old string format and new { roomId, userName } object
+        const roomId = typeof data === 'object' ? data.roomId : data;
+        const userName = typeof data === 'object' && data.userName ? data.userName : "Guest";
 
-        if (roomSize >= 2) {
-            // Agar 2 log hain, toh 3rd ko roko
-            socket.emit('roomFull'); 
-        } else {
-            // Agar jagah hai, toh room mein entry do
-            socket.join(roomId);
-            socket.roomId = roomId; // Socket ko uska room number yaad dila do
-            console.log(`User ${socket.id} ne room ${roomId} join kiya. (Total: ${roomSize + 1})`);
+        // Max 2 users check (optional, keeps your roomFull logic working)
+        if (roomUsers[roomId] && roomUsers[roomId].length >= 2) {
+            socket.emit('roomFull');
+            return;
         }
+
+        currentRoom = roomId;
+        currentUserName = userName;
+        socket.join(roomId);
+
+        if (!roomUsers[roomId]) {
+            roomUsers[roomId] = [];
+        }
+        roomUsers[roomId].push({ id: socket.id, name: userName });
+
+        // Send updated user list to everyone in the room
+        io.to(roomId).emit('roomUsers', roomUsers[roomId]);
+
+        // Notify the other person in the room that someone joined
+        socket.to(roomId).emit('userStatus', { user: userName, action: 'joined' });
     });
 
-    // 🔒 Ab 'broadcast' sabko nahi, sirf uske apne "Room" (socket.roomId) mein jayega
-    
     socket.on('drawing', (data) => {
-        if(socket.roomId) socket.to(socket.roomId).emit('drawing', data);
+        if (currentRoom) socket.to(currentRoom).emit('drawing', data);
     });
 
     socket.on('drawShape', (data) => {
-        if(socket.roomId) socket.to(socket.roomId).emit('drawShape', data);
-    });
-
-    socket.on('chatMessage', (data) => {
-        if(socket.roomId) socket.to(socket.roomId).emit('chatMessage', data);
+        if (currentRoom) socket.to(currentRoom).emit('drawShape', data);
     });
 
     socket.on('drawText', (data) => {
-        if(socket.roomId) socket.to(socket.roomId).emit('drawText', data);
+        if (currentRoom) socket.to(currentRoom).emit('drawText', data);
+    });
+
+    socket.on('undo', () => {
+        if (currentRoom) socket.to(currentRoom).emit('undo');
+    });
+
+    socket.on('redo', () => {
+        if (currentRoom) socket.to(currentRoom).emit('redo');
     });
 
     socket.on('clearCanvas', () => {
-        if(socket.roomId) socket.to(socket.roomId).emit('clearCanvas');
-    });
-    // Dost ko Undo ka signal bhejna (Sirf uske Room mein)
-    socket.on('undo', () => {
-      if(socket.roomId) socket.to(socket.roomId).emit('undo');
+        if (currentRoom) socket.to(currentRoom).emit('clearCanvas');
     });
 
-    // Dost ko Redo ka signal bhejna (Sirf uske Room mein)
-    socket.on('redo', () => {
-      if(socket.roomId) socket.to(socket.roomId).emit('redo');
+    socket.on('chatMessage', (data) => {
+        if (currentRoom) socket.to(currentRoom).emit('chatMessage', data);
     });
+
     socket.on('disconnect', () => {
-        console.log('User disconnect ho gaya:', socket.id);
+        if (currentRoom && roomUsers[currentRoom]) {
+            roomUsers[currentRoom] = roomUsers[currentRoom].filter(u => u.id !== socket.id);
+            
+            // Update remaining users list
+            io.to(currentRoom).emit('roomUsers', roomUsers[currentRoom]);
+            
+            // Notify remaining users that this person left
+            socket.to(currentRoom).emit('userStatus', { user: currentUserName, action: 'left' });
+
+            if (roomUsers[currentRoom].length === 0) {
+                delete roomUsers[currentRoom];
+            }
+        }
     });
 });
 
-server.listen(3000, () => {
-    console.log('Server is running on http://localhost:3000');
+const PORT = process.env.PORT || 3000;
+server.listen(PORT, () => {
+    console.log(`Server running on port ${PORT}`);
 });
